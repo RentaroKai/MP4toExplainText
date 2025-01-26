@@ -45,7 +45,8 @@ def analyze_video(video_path, prompt="この動画における人物の動きを
 
     model = genai.GenerativeModel(
         model_name="gemini-2.0-flash-thinking-exp-01-21",
-        generation_config=generation_config
+        generation_config=generation_config,
+        system_instruction="常にカンマ区切りのcsv形式で回答する",
     )
 
     # 動画のアップロードと処理待ち

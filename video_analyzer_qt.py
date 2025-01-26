@@ -30,8 +30,8 @@ class VideoAnalyzerWindow(QMainWindow):
         # プロンプト入力部分
         layout.addWidget(QLabel("プロンプト："))
         self.prompt_edit = QTextEdit()
-        self.prompt_edit.setPlaceholderText("この動画における人物の動きを解析して日本語で解説してください。")
-        self.prompt_edit.setText("この動画における人物の動きを解析して日本語で解説してください。")
+        self.prompt_edit.setPlaceholderText("この動画における人物の動きを解析して以下のフォーマット(カンマ区切りのcsv)で返してください。\n# 項目の内容(ヘッダー):\nこの動きにふさわしいファイル名(英語),日本語のファイル名,この動きをあてはめるのにふさわしい人物像(男女年齢),この動きがふさわしい場面(日本語),全体的な動きの説明(日本語),初期のポーズ(日本語),終わりのポーズ(日本語)")
+        self.prompt_edit.setText("この動画における人物の動きを解析して以下のフォーマット(カンマ区切りのcsv)で返してください。\n# 項目の内容(ヘッダー):\nこの動きにふさわしいファイル名(英語),日本語のファイル名,この動きをあてはめるのにふさわしい人物像(男女年齢),この動きがふさわしい場面(日本語),全体的な動きの説明(日本語),初期のポーズ(日本語),終わりのポーズ(日本語)")
         self.prompt_edit.setMaximumHeight(100)
         layout.addWidget(self.prompt_edit)
         
@@ -73,7 +73,7 @@ class VideoAnalyzerWindow(QMainWindow):
         
         prompt = self.prompt_edit.toPlainText()
         if not prompt:
-            prompt = "この動画における人物の動きを解析して日本語で解説してください。"
+            prompt = "この動画における人物の動きを解析して以下のフォーマット(カンマ区切りのcsv)で返してください。\n# 項目の内容(ヘッダー):\nこの動きにふさわしいファイル名(英語),日本語のファイル名,この動きをあてはめるのにふさわしい人物像(男女年齢),この動きがふさわしい場面(日本語),全体的な動きの説明(日本語),初期のポーズ(日本語),終わりのポーズ(日本語)"
         
         try:
             self.result_text.setPlainText("解析を開始します...\n")
