@@ -1,0 +1,2 @@
+# MP4toExplainText
+GoogleのAPIを使って、動画解析を日本語で自由にできるツール
