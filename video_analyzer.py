@@ -3,12 +3,19 @@ import time
 import argparse
 import google.generativeai as genai
 
-def setup_gemini():
-    """Gemini APIの初期設定を行う"""
+def get_gemini_client():
+    """Gemini APIのクライアントを取得する汎用関数"""
+    # SSL証明書の環境変数をクリア
+    if 'SSL_CERT_FILE' in os.environ:
+        del os.environ['SSL_CERT_FILE']
+    
+    # API keyの取得と設定
     api_key = os.environ.get("GOOGLE_API_KEY")
     if not api_key:
         raise ValueError("環境変数 'GOOGLE_API_KEY' が設定されていません")
+    
     genai.configure(api_key=api_key)
+    return genai
 
 def upload_video(video_path):
     """動画ファイルをGeminiにアップロードする"""
@@ -34,6 +41,9 @@ def wait_for_processing(file):
 
 def analyze_video(video_path, prompt="この動画における人物の動きを解析して日本語で解説してください。"):
     """動画を解析して結果を返す"""
+    # Geminiクライアントの取得
+    genai = get_gemini_client()
+    
     # Geminiモデルの設定
     generation_config = {
         "temperature": 0.7,
@@ -65,7 +75,7 @@ def main():
     args = parser.parse_args()
 
     try:
-        setup_gemini()
+        get_gemini_client()
         result = analyze_video(args.video_path, args.prompt)
         print("\n解析結果:")
         print(result)

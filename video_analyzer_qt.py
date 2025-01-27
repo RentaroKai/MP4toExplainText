@@ -5,7 +5,7 @@ from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                              QFileDialog, QMessageBox)
 from PySide6.QtCore import Qt
 import google.generativeai as genai
-from video_analyzer import setup_gemini, analyze_video
+from video_analyzer import get_gemini_client, analyze_video
 
 class VideoAnalyzerWindow(QMainWindow):
     def __init__(self):
@@ -48,7 +48,7 @@ class VideoAnalyzerWindow(QMainWindow):
         
         # Gemini APIの初期設定
         try:
-            setup_gemini()
+            get_gemini_client()
         except ValueError as e:
             QMessageBox.critical(self, "エラー", str(e))
             sys.exit(1)
