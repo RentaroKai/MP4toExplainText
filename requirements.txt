@@ -1,0 +1,5 @@
+PySide6>=6.5.0          # UIフレームワーク
+google-generativeai>=0.3.0  # Gemini API
+python-dateutil>=2.8.2  # 日付処理
+schedule>=1.2.0         # 定期クリーンアップ
+certifi>=2024.2.2

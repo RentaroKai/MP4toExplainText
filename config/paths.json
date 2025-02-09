@@ -1,0 +1,8 @@
+{
+    "temp_dir": "./temp",
+    "upload_dir": "./temp/uploads",
+    "cache_dir": "./temp/cache",
+    "export_dir": "./exports",
+    "log_dir": "./logs",
+    "db_path": "./data/db/motion_tag.db"
+} 

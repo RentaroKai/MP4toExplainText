@@ -1,0 +1,3 @@
+"""
+MotionTag application package
+""" 
