@@ -11,3 +11,28 @@ logs/
 *.log.*.*.*.*.*
 exports/
 tools/
+
+# 仮想環境のディレクトリ
+venv/
+ENV/
+
+# Pythonのバイトコード
+*.pyc
+
+# macOSのシステムファイル
+.DS_Store
+
+# IDE関連の設定ファイル・ディレクトリ
+.vscode/
+.idea/
+
+# ビルド成果物のディレクトリ
+dist/
+build/
+
+# パッケージのディレクトリ
+packages/
+
+# パッケージのディレクトリ
+.spec
+MP4toExplainText.spec
