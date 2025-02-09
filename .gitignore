@@ -1,0 +1,13 @@
+tests/
+__pycache__/
+temp/
+logs/
+*.db
+*.log
+*.log.*
+*.log.*.*
+*.log.*.*.*
+*.log.*.*.*.*
+*.log.*.*.*.*.*
+exports/
+tools/
