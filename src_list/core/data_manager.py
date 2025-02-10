@@ -1,5 +1,5 @@
 from typing import List, Dict, Any
-from src_list.core.db_manager import DatabaseManager
+from .db_manager import DatabaseManager
 
 class DataManager:
     def __init__(self, db_path: str):

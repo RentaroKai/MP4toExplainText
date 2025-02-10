@@ -35,8 +35,15 @@ class DatabaseManager:
         """
         try:
             self._cursor.execute("""
-                SELECT v.*, ar.character_gender, ar.character_age_group, 
-                       ar.character_body_type, GROUP_CONCAT(t.tag) as tags
+                SELECT 
+                    v.id,
+                    v.file_path,
+                    v.file_name,
+                    ar.character_gender,
+                    ar.character_age_group,
+                    ar.character_body_type,
+                    ar.result_json,
+                    GROUP_CONCAT(t.tag) as tags
                 FROM videos v
                 LEFT JOIN analysis_results ar ON v.id = ar.video_id
                 LEFT JOIN tags t ON v.id = t.video_id

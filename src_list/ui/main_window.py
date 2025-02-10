@@ -4,9 +4,9 @@ from PySide6.QtWidgets import (
     QFileDialog
 )
 from PySide6.QtCore import Qt
-from src_list.ui.table_widget import CustomTableWidget
-from src_list.core.data_manager import DataManager
-from src_list.models.table_item import TableItem
+from .table_widget import CustomTableWidget
+from ..core.data_manager import DataManager
+from ..models.table_item import TableItem
 import os
 
 class MainWindow(QMainWindow):
@@ -117,7 +117,13 @@ class MainWindow(QMainWindow):
         Args:
             index (QModelIndex): クリックされた位置
         """
-        if index.column() == 7:  # タグカラム
+        column = index.column()
+        if column in [5, 6, 7, 8]:  # シーン、強度、テンポ、ループ可能
+            item = self.table.item(index.row(), column)
+            if item:
+                item.setFlags(item.flags() | Qt.ItemIsEditable)
+                self.table.editItem(item)
+        elif column == 9:  # その他タグ
             self.table.edit_tags(index.row())
 
     def _on_tag_edited(self, video_id: int, new_tags: list):
