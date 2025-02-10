@@ -191,9 +191,9 @@ class MainWindow(QMainWindow):
     def setup_table_view(self, parent_layout):
         """テーブルビューの設定"""
         self.table = QTableWidget()
-        self.table.setColumnCount(5)
+        self.table.setColumnCount(6)  # カラム数を6に変更
         self.table.setHorizontalHeaderLabels([
-            "Video Name", "Status", "Progress", "Tags", "Actions"
+            "Video Name", "Open", "Status", "Progress", "Tags", "Actions"  # "Open"カラムを追加
         ])
         self.table.horizontalHeader().setStretchLastSection(True)
         parent_layout.addWidget(self.table)
@@ -295,21 +295,27 @@ class MainWindow(QMainWindow):
         self.table.setItem(row, 0, QTableWidgetItem(Path(file_path).name))
         self.table.item(row, 0).setData(Qt.UserRole, video_id)
         
+        # 動画を開くボタン
+        open_button = QPushButton("🎬")
+        open_button.setToolTip("動画を開く")
+        open_button.clicked.connect(lambda: os.startfile(file_path))
+        self.table.setCellWidget(row, 1, open_button)
+        
         # 状態
-        self.table.setItem(row, 1, QTableWidgetItem(status))
+        self.table.setItem(row, 2, QTableWidgetItem(status))
         
         # 進捗バー
         progress_bar = QProgressBar()
         progress_bar.setValue(progress)
-        self.table.setCellWidget(row, 2, progress_bar)
+        self.table.setCellWidget(row, 3, progress_bar)
         
         # タグ（空）
-        self.table.setItem(row, 3, QTableWidgetItem(""))
+        self.table.setItem(row, 4, QTableWidgetItem(""))
         
         # 再処理ボタン
         reprocess_button = QPushButton("▶Run")
         reprocess_button.clicked.connect(lambda: self.on_reprocess(video_id, file_path))
-        self.table.setCellWidget(row, 4, reprocess_button)
+        self.table.setCellWidget(row, 5, reprocess_button)
     
     async def process_video(self, video_id: int, file_path: str):
         """動画を非同期で処理"""
@@ -327,7 +333,7 @@ class MainWindow(QMainWindow):
         for row in range(self.table.rowCount()):
             item = self.table.item(row, 0)
             if item and item.data(Qt.UserRole) == video_id:
-                progress_bar = self.table.cellWidget(row, 2)
+                progress_bar = self.table.cellWidget(row, 3)
                 if progress_bar:
                     progress_bar.setValue(progress)
                 break
@@ -337,7 +343,7 @@ class MainWindow(QMainWindow):
         for row in range(self.table.rowCount()):
             item = self.table.item(row, 0)
             if item and item.data(Qt.UserRole) == video_id:
-                self.table.item(row, 1).setText(status)
+                self.table.item(row, 2).setText(status)
                 break
     
     def show_error(self, message: str):

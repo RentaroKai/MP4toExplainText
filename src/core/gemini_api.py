@@ -93,9 +93,9 @@ class GeminiAPI:
             
             # Required Fields:
             - Animation File Name (in English, around 16 characters)
-            - Character Gender (suitable character_gender for the movement:male, female, both, any)
-            - Character Age Group (suitable character_Age_Group for the movement:young, adult, elderly, child)
-            - Character Body Type (suitable Character_Body_Type for the movement:average, muscular, slim)
+            - Character Gender (suitable character_gender for the movement: male, female, both, any; 判定があいまいな場合は any でよい)
+            - Character Age Group (suitable character_Age_Group for the movement: young, adult, elderly, child; 判定がはっきりしない場合は any でよい)
+            - Character Body Type (suitable Character_Body_Type for the movement: average, muscular, slim; 明確な判断がつかない場合は any でよい)
             - Overall Movement Description (a brief description of the movement, 50-120 characters)
             - Initial Pose (starting pose, up to 30 characters)
             - Final Pose (ending pose, up to 30 characters)
