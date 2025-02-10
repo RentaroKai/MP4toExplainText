@@ -37,3 +37,5 @@ packages/
 .spec
 MP4toExplainText.spec
 EXE.zip
+GIT.jpg
+.cursor/rules/commitmessage.mdc
