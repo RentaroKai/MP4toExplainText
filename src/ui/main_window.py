@@ -218,13 +218,29 @@ class MainWindow(QMainWindow):
         """エクスポートボタンの設定"""
         export_layout = QHBoxLayout()
         
+        # CSVセクション
+        csv_layout = QHBoxLayout()
         export_csv_btn = QPushButton("Export CSV")
         export_csv_btn.clicked.connect(self.export_to_csv)
-        export_layout.addWidget(export_csv_btn)
+        csv_layout.addWidget(export_csv_btn)
         
+        open_csv_folder_btn = QPushButton("📁CSV")
+        open_csv_folder_btn.clicked.connect(lambda: self.open_folder("csv"))
+        open_csv_folder_btn.setToolTip("CSVフォルダを開く")
+        csv_layout.addWidget(open_csv_folder_btn)
+        export_layout.addLayout(csv_layout)
+        
+        # JSONセクション
+        json_layout = QHBoxLayout()
         export_json_btn = QPushButton("Export JSON")
         export_json_btn.clicked.connect(self.export_to_json)
-        export_layout.addWidget(export_json_btn)
+        json_layout.addWidget(export_json_btn)
+        
+        open_json_folder_btn = QPushButton("📁JSON")
+        open_json_folder_btn.clicked.connect(lambda: self.open_folder("json"))
+        open_json_folder_btn.setToolTip("JSONフォルダを開く")
+        json_layout.addWidget(open_json_folder_btn)
+        export_layout.addLayout(json_layout)
         
         parent_layout.addLayout(export_layout)
     
@@ -594,4 +610,25 @@ How to Use:
 
 Visit our website for more help.
         """
-        QMessageBox.information(self, "How to Use", help_text) 
+        QMessageBox.information(self, "How to Use", help_text)
+
+    def open_folder(self, folder_type: str):
+        """指定されたフォルダをエクスプローラーで開く"""
+        try:
+            paths = self.config.get_paths()
+            export_dir = Path(paths.get("export_dir", "./exports"))
+            target_dir = export_dir / folder_type
+            
+            if not target_dir.exists():
+                target_dir.mkdir(parents=True, exist_ok=True)
+            
+            os.startfile(str(target_dir))
+            self.logger.info(f"{folder_type}フォルダを開きました: {target_dir}")
+            
+        except Exception as e:
+            self.logger.error(f"フォルダを開く際にエラーが発生しました: {str(e)}")
+            QMessageBox.critical(
+                self,
+                "エラー",
+                f"フォルダを開けませんでした:\n{str(e)}"
+            ) 
