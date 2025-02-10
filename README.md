@@ -50,9 +50,9 @@ Gemini API キーを取得するには以下の手順に従ってください:
 
 
 1. アプリケーションの起動:
-```bash
-python src/main.py
-```
+
+batで起動するなら run.bat
+pythonで起動するなら src/main.py
 
 2. UIから動画ファイルを選択し、分析を開始
 
