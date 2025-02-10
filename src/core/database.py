@@ -46,6 +46,9 @@ class Database:
                     video_id INTEGER NOT NULL,
                     result_json TEXT NOT NULL,
                     version TEXT NOT NULL,
+                    character_gender TEXT DEFAULT NULL,
+                    character_age_group TEXT DEFAULT NULL,
+                    character_body_type TEXT DEFAULT NULL,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (video_id) REFERENCES videos (id)
                 )

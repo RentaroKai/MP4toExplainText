@@ -39,13 +39,20 @@ class GeminiAPI:
             "max_output_tokens": 8192,
             "response_schema": content.Schema(
                 type=content.Type.OBJECT,
-                required=["Name of AnimationFile", "Recommended Character Profile", 
-                         "Overall Movement Description", "Appropriate Scene", "Posture Detail"],
+                required=["Name of AnimationFile", "Overall Movement Description", 
+                         "Appropriate Scene", "Posture Detail",
+                         "character_gender", "character_age_group", "character_body_type"],
                 properties={
                     "Name of AnimationFile": content.Schema(
                         type=content.Type.STRING,
                     ),
-                    "Recommended Character Profile": content.Schema(
+                    "character_gender": content.Schema(
+                        type=content.Type.STRING,
+                    ),
+                    "character_age_group": content.Schema(
+                        type=content.Type.STRING,
+                    ),
+                    "character_body_type": content.Schema(
                         type=content.Type.STRING,
                     ),
                     "Overall Movement Description": content.Schema(
@@ -86,7 +93,9 @@ class GeminiAPI:
             
             # Required Fields:
             - Animation File Name (in English, around 16 characters)
-            - Recommended Character Profile (suitable gender and age for the movement)
+            - Character Gender (male, female, both, any)
+            - Character Age Group (young, adult, elderly, child)
+            - Character Body Type (average, muscular, slim)
             - Overall Movement Description (a brief description of the movement, 50-120 characters)
             - Initial Pose (starting pose, up to 30 characters)
             - Final Pose (ending pose, up to 30 characters)
@@ -153,7 +162,9 @@ class GeminiAPI:
                 video_file,
                 "この動画の動作を解析して、以下の情報を含むJSONで返してください：\n"
                 "- Name of AnimationFile: 動画の名前（英語、16文字程度）\n"
-                "- Recommended Character Profile: この動作に適した性別と年齢\n"
+                "- Character Gender: この動作に適した性別（男性、女性、両方、どちらでも可）\n"
+                "- Character Age Group: この動作に適した年齢層（若者、成人、高齢者、子供）\n"
+                "- Character Body Type: この動作に適した体型（平均、筋肉質、スリム）\n"
                 "- Overall Movement Description: 動作の説明（50-120文字）\n"
                 "- Initial Pose: 開始ポーズ（30文字以内）\n"
                 "- Final Pose: 終了ポーズ（30文字以内）\n"

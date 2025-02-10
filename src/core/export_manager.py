@@ -61,7 +61,9 @@ class ExportManager:
             headers = [
                 "filename",
                 "animation_name_en",
-                "recommended_character_profile",
+                "character_gender",
+                "character_age_group",
+                "character_body_type",
                 "motion_description",
                 "initial_pose",
                 "final_pose",
@@ -89,7 +91,7 @@ class ExportManager:
                         # 解析結果がない場合は基本情報のみ出力
                         row = [
                             video_info["file_name"],
-                            "", "", "", "", "", "", "", "", "", "",
+                            "", "", "", "", "", "", "", "", "", "", "", "",
                             video_info["status"],
                             video_info["created_at"],
                             video_info["updated_at"]
@@ -100,7 +102,9 @@ class ExportManager:
                         row = [
                             video_info["file_name"],
                             result_data.get("Name of AnimationFile", ""),
-                            result_data.get("Recommended Character Profile", ""),
+                            result_data.get("character_gender", ""),
+                            result_data.get("character_age_group", ""),
+                            result_data.get("character_body_type", ""),
                             result_data.get("Overall Movement Description", ""),
                             result_data.get("Initial Pose", ""),
                             result_data.get("Final Pose", ""),
