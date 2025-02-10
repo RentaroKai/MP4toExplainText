@@ -10,7 +10,7 @@ from ..models.table_item import TableItem
 import os
 
 class MainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, db_path=None):
         super().__init__()
         self.setWindowTitle("モーションリスト管理")
         self.setGeometry(100, 100, 1200, 800)
@@ -22,7 +22,8 @@ class MainWindow(QMainWindow):
         self._setup_ui()
         
         # データベース接続
-        self._connect_database()
+        if db_path:
+            self._connect_database(db_path)
 
     def _setup_ui(self):
         """UIの初期設定"""
@@ -61,16 +62,21 @@ class MainWindow(QMainWindow):
         # ステータスバー
         self.statusBar().showMessage("準備完了")
 
-    def _connect_database(self):
-        """データベースに接続"""
+    def _connect_database(self, db_path=None):
+        """
+        データベースに接続
+        Args:
+            db_path (str, optional): データベースファイルのパス
+        """
         try:
-            # データベースファイルを選択
-            db_path, _ = QFileDialog.getOpenFileName(
-                self,
-                "データベースファイルを選択",
-                "",
-                "SQLite DB (*.db);;All Files (*)"
-            )
+            if not db_path:
+                # データベースファイルを選択
+                db_path, _ = QFileDialog.getOpenFileName(
+                    self,
+                    "データベースファイルを選択",
+                    "",
+                    "SQLite DB (*.db);;All Files (*)"
+                )
             
             if db_path:
                 self.data_manager = DataManager(db_path)

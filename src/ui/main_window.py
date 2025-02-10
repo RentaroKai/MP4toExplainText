@@ -17,6 +17,7 @@ from src.core.video_processor import VideoProcessor
 from src.core.database import Database
 from src.core.export_manager import ExportManager
 from typing import List
+from src_list.ui.main_window import MainWindow as MotionListWindow
 
 class SignalEmitter(QObject):
     """非同期処理からのシグナルを発行するためのクラス"""
@@ -563,7 +564,7 @@ class MainWindow(QMainWindow):
         
         # モーションリスト管理を開く
         motion_list_action = window_menu.addAction("Open Motion List")
-        motion_list_action.triggered.connect(self.open_motion_list)
+        motion_list_action.triggered.connect(self._open_motion_list)
         
         # ヘルプメニュー
         help_menu = menubar.addMenu("Help")
@@ -618,7 +619,7 @@ class MainWindow(QMainWindow):
         QMessageBox.about(
             self,
             "About",
-            "MotionTag - Video Tool\nVersion: 1.0.0\n© 2024 MotionTag Team"
+            "MP4toText - Video Tool\nVersion: 1.0.0\n© 2025 RentaroKai"
         )
 
     def show_help(self):
@@ -656,13 +657,24 @@ Visit our website for more help.
                 f"フォルダを開けませんでした:\n{str(e)}"
             )
 
-    def open_motion_list(self):
+    def _open_motion_list(self):
         """モーションリスト管理ウィンドウを開く"""
         try:
-            # 既存のQApplicationを使用して新しいウィンドウを作成
-            from src_list.ui.main_window import MainWindow as MotionListWindow
-            self.motion_list_window = MotionListWindow()
-            self.motion_list_window.show()
+            db_path = self.config.get_paths().get("db_path")
+            if db_path and Path(db_path).exists():
+                self.motion_list_window = MotionListWindow(db_path=db_path)
+                self.motion_list_window.show()
+            else:
+                QMessageBox.warning(
+                    self,
+                    "警告",
+                    "データベースファイルが見つかりません。\nモーションリスト管理ウィンドウで手動で選択してください。"
+                )
+                self.motion_list_window = MotionListWindow()
+                self.motion_list_window.show()
         except Exception as e:
-            self.logger.error(f"モーションリスト管理の起動に失敗しました: {str(e)}")
-            QMessageBox.critical(self, "エラー", "モーションリスト管理の起動に失敗しました。\n詳細はログを確認してください。") 
+            QMessageBox.critical(
+                self,
+                "エラー",
+                f"モーションリスト管理ウィンドウの起動に失敗しました: {str(e)}"
+            ) 
