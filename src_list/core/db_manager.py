@@ -39,9 +39,10 @@ class DatabaseManager:
                     v.id,
                     v.file_path,
                     v.file_name,
-                    ar.character_gender,
-                    ar.character_age_group,
-                    ar.character_body_type,
+                    json_extract(ar.result_json, '$.character_gender') as character_gender,
+                    json_extract(ar.result_json, '$.character_age_group') as character_age_group,
+                    json_extract(ar.result_json, '$.character_body_type') as character_body_type,
+                    json_extract(ar.result_json, '$.Name of AnimationFile') as animation_file_name,
                     ar.result_json,
                     GROUP_CONCAT(t.tag) as tags
                 FROM videos v
@@ -52,8 +53,13 @@ class DatabaseManager:
             columns = [description[0] for description in self._cursor.description]
             # デバッグ用：取得したデータの内容を確認
             rows = self._cursor.fetchall()
+            print("=== デバッグ情報 ===")
+            print(f"カラム名: {columns}")
             for row in rows:
-                print(f"Row data: {dict(zip(columns, row))}")
+                print(f"行データ: {dict(zip(columns, row))}")
+                print(f"性別: {row[3]}, 年齢: {row[4]}, 体型: {row[5]}")
+                print(f"アニメーションファイル名: {row[6]}")
+                print("---")
             return [dict(zip(columns, row)) for row in rows]
         except sqlite3.Error as e:
             print(f"データ取得エラー: {e}")

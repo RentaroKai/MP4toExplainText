@@ -20,6 +20,7 @@ class CustomTableWidget(QTableWidget):
             "シーン", "強度", "テンポ", "ループ可能",
             "動作概要", "姿勢詳細",
             "開始姿勢", "終了姿勢",
+            "アニメーションファイル名",
             "その他タグ"
         ]
         self.setColumnCount(len(columns))
@@ -33,7 +34,8 @@ class CustomTableWidget(QTableWidget):
             header.setSectionResizeMode(i, QHeaderView.ResizeToContents)
         for i in range(9, 13):  # 動作概要から終了姿勢まで
             header.setSectionResizeMode(i, QHeaderView.Interactive)  # ユーザーが幅を調整可能
-        header.setSectionResizeMode(13, QHeaderView.Stretch)  # その他タグ
+        header.setSectionResizeMode(13, QHeaderView.ResizeToContents)  # アニメーションファイル名
+        header.setSectionResizeMode(14, QHeaderView.Stretch)  # その他タグ
         
         # その他の設定
         self.setSelectionBehavior(QTableWidget.SelectRows)
@@ -86,7 +88,8 @@ class CustomTableWidget(QTableWidget):
             self.setItem(row, 10, self._create_item(item.posture_detail or ''))
             self.setItem(row, 11, self._create_item(item.initial_pose or ''))
             self.setItem(row, 12, self._create_item(item.final_pose or ''))
-            self.setItem(row, 13, self._create_item(', '.join(other_tags)))
+            self.setItem(row, 13, self._create_item(item.animation_file_name or ''))
+            self.setItem(row, 14, self._create_item(', '.join(other_tags)))
 
     def _create_item(self, text: str) -> QTableWidgetItem:
         """
@@ -106,7 +109,7 @@ class CustomTableWidget(QTableWidget):
         Args:
             row (int): 編集する行
         """
-        item = self.item(row, 13)  # その他タグカラム
+        item = self.item(row, 14)  # その他タグカラム
         if item:
             item.setFlags(item.flags() | Qt.ItemIsEditable)
             self.editItem(item)
@@ -117,7 +120,7 @@ class CustomTableWidget(QTableWidget):
         Args:
             item (QTableWidgetItem): 変更されたアイテム
         """
-        if item.column() == 13:  # その他タグカラム
+        if item.column() == 14:  # その他タグカラム
             row = item.row()
             video_id = int(self.item(row, 0).text())
             # 既存のタグを保持

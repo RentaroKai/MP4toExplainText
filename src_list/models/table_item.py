@@ -19,6 +19,7 @@ class TableItem:
     intensity: Optional[str] = None
     tempo: Optional[str] = None
     loopable: Optional[str] = None
+    animation_file_name: Optional[str] = None
     tags: List[str] = None
 
     @classmethod
@@ -66,6 +67,7 @@ class TableItem:
             intensity=result_json.get('Intensity Force', ''),
             tempo=result_json.get('Tempo Speed', ''),
             loopable=result_json.get('Loopable', ''),
+            animation_file_name=result_json.get('Name of AnimationFile', ''),
             tags=tags
         )
 
@@ -90,5 +92,6 @@ class TableItem:
             'intensity': self.intensity,
             'tempo': self.tempo,
             'loopable': self.loopable,
+            'animation_file_name': self.animation_file_name,
             'tags': ','.join(self.tags) if self.tags else ''
         } 
