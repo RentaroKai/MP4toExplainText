@@ -93,14 +93,14 @@ class GeminiAPI:
             
             # Required Fields:
             - Animation File Name (in English, around 16 characters)
-            - Character Gender (male, female, both, any)
-            - Character Age Group (young, adult, elderly, child)
-            - Character Body Type (average, muscular, slim)
+            - Character Gender (suitable character_gender for the movement:male, female, both, any)
+            - Character Age Group (suitable character_Age_Group for the movement:young, adult, elderly, child)
+            - Character Body Type (suitable Character_Body_Type for the movement:average, muscular, slim)
             - Overall Movement Description (a brief description of the movement, 50-120 characters)
             - Initial Pose (starting pose, up to 30 characters)
             - Final Pose (ending pose, up to 30 characters)
             - Appropriate Scene (e.g., daily life, combat, etc.)
-            - Loopable (Criteria for loopability:The initial and final poses are identical,and the movement can be naturally repeated. e.g.,Yes/No)
+            - Loopable (The first and last poses match exactly in position and angle, making the loop unnoticeable even when played endlessly. e.g., Yes/No)
             - Tempo Speed (e.g., Fast-paced, Moderate, Slow)
             - Intensity Force (e.g., High Impact, Subtle)
             - Posture Detail (detailed description of posture and body movement changes, 16-100 characters)
