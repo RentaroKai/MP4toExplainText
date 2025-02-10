@@ -154,7 +154,7 @@ class MainWindow(QMainWindow):
         filter_layout = QHBoxLayout()
         
         # フィルタラベル
-        filter_label = QLabel("Filter by filename:")
+        filter_label = QLabel("Filter:")
         filter_layout.addWidget(filter_label)
         
         # フィルタ入力フィールド

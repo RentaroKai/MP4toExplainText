@@ -81,20 +81,20 @@ class GeminiAPI:
             model_name="gemini-2.0-flash",
             generation_config=generation_config,
             system_instruction="""
-            動画内の人物の動作を解析し、結果をJSON形式で返してください。
-            回答は簡潔にし、冗長な説明は避けてください。
-
-            # 必須フィールド:
-            - Animation File Name（英語、約16文字）
-            - Recommended Character Profile（この動作に適した性別と年齢）
-            - Overall Movement Description（動作の簡潔な説明、50-120文字）
-            - Initial Pose（開始ポーズ、最大30文字）
-            - Final Pose（終了ポーズ、最大30文字）
-            - Appropriate Scene（例：日常生活、戦闘など）
-            - Loopable（ループ可能かどうか、Yes/No）
-            - Tempo Speed（例：Fast-paced, Moderate, Slow）
-            - Intensity Force（例：High Impact, Subtle）
-            - Posture Detail（姿勢や体の動きの変化の詳細、16-100文字）
+            Analyze the actions of people in the video and return the results in JSON format.
+            Keep the response concise and avoid unnecessary details.
+            
+            # Required Fields:
+            - Animation File Name (in English, around 16 characters)
+            - Recommended Character Profile (suitable gender and age for the movement)
+            - Overall Movement Description (a brief description of the movement, 50-120 characters)
+            - Initial Pose (starting pose, up to 30 characters)
+            - Final Pose (ending pose, up to 30 characters)
+            - Appropriate Scene (e.g., daily life, combat, etc.)
+            - Loopable (Criteria for loopability:The initial and final poses are identical,and the movement can be naturally repeated. e.g.,Yes/No)
+            - Tempo Speed (e.g., Fast-paced, Moderate, Slow)
+            - Intensity Force (e.g., High Impact, Subtle)
+            - Posture Detail (detailed description of posture and body movement changes, 16-100 characters)
             """
         )
     
