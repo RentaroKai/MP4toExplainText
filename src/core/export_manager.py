@@ -59,20 +59,20 @@ class ExportManager:
             
             # ヘッダーの定義
             headers = [
-                "ファイル名",
-                "アニメーション名（英語）",
-                "推奨キャラクタープロフィール",
-                "動作の説明",
-                "初期ポーズ",
-                "最終ポーズ",
-                "適切なシーン",
-                "ループ可能",
-                "テンポ",
-                "動きの強さ",
-                "姿勢の詳細",
-                "ステータス",
-                "作成日時",
-                "更新日時"
+                "filename",
+                "animation_name_en",
+                "recommended_character_profile",
+                "motion_description",
+                "initial_pose",
+                "final_pose",
+                "suitable_scenes",
+                "can_loop",
+                "tempo",
+                "motion_intensity",
+                "posture_details",
+                "status",
+                "created_at",
+                "updated_at"
             ]
             
             with open(filepath, 'w', newline='', encoding='utf-8') as f:
