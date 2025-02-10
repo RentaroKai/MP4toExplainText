@@ -353,41 +353,51 @@ class MainWindow(QMainWindow):
     def on_batch_process(self):
         """選択された項目の一括処理"""
         try:
-            selected_rows = self.table.selectedItems()
+            # デバッグ用：選択状態の確認
+            print("=== 処理開始前の選択状態 ===")
+            initial_selected_items = self.table.selectedItems()
+            print(f"選択されているアイテム数: {len(initial_selected_items)}")
+            for item in initial_selected_items:
+                print(f"選択行: {item.row()}, 列: {item.column()}, テキスト: {item.text()}")
+            
+            # 選択された行の一意のインデックスを取得
+            selected_rows = set(item.row() for item in initial_selected_items)
+            print(f"一意の選択行数: {len(selected_rows)}")
+            print(f"選択された行: {sorted(list(selected_rows))}")
+            
             if not selected_rows:
                 self.logger.info("処理する項目が選択されていません")
                 return
             
             self.logger.info(f"選択された項目数: {len(selected_rows)}")
+            video_ids = []  # 処理対象のvideo_idリスト
             
-            video_ids = []  # 順序を保持するためにリストを使用
-            processed_rows = set()
-            
-            for item in selected_rows:
-                row = item.row()
-                if row in processed_rows:
-                    continue
-                    
+            for row in selected_rows:
                 try:
                     video_id = self.table.item(row, 0).data(Qt.UserRole)
                     if video_id is None:
                         self.logger.warning(f"行 {row} のvideo_idがNoneです")
                         continue
-                        
+                    
                     video_info = self.db.get_video_info(video_id)
                     if video_info is None:
                         self.logger.warning(f"video_id {video_id} の情報が見つかりません")
                         continue
-                        
+                    
                     file_path = video_info["file_path"]
-                    if not (video_id, file_path) in video_ids:  # 重複チェック
-                        video_ids.append((video_id, file_path))
-                    processed_rows.add(row)
+                    video_ids.append((video_id, file_path))
                     self.logger.info(f"処理キューに追加: video_id={video_id}, file_path={file_path}")
                     
                 except Exception as e:
                     self.logger.error(f"行 {row} の処理中にエラーが発生: {str(e)}")
                     continue
+            
+            # デバッグ用：処理後の選択状態の確認
+            print("\n=== 処理後の選択状態 ===")
+            final_selected_items = self.table.selectedItems()
+            print(f"選択されているアイテム数: {len(final_selected_items)}")
+            for item in final_selected_items:
+                print(f"選択行: {item.row()}, 列: {item.column()}, テキスト: {item.text()}")
             
             if not video_ids:
                 self.logger.warning("処理可能な動画が見つかりませんでした")

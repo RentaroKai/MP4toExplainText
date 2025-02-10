@@ -40,6 +40,8 @@ class VideoProcessor:
             while len(self._processing) > 0:
                 current_processing = self._processing.copy()  # コピーを作成
                 print(f"他の動画の処理完了を待機中... - 待機中の動画ID: {video_id}, 処理中の動画: {current_processing}")
+                # 処理待ち状態に設定
+                self.db.update_video_status(video_id, VideoStatus.PENDING.value)
                 await asyncio.sleep(1)  # 1秒待機
             
             print(f"処理を開始します - video_id: {video_id}")
