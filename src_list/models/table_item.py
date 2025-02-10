@@ -35,13 +35,20 @@ class TableItem:
         tags = [tag.strip() for tag in tags if tag.strip()]
 
         # 動作関連の情報をJSONから取得
-        result_json = data.get('result_json', {})
+        result_json = data.get('result_json', '{}')
         if isinstance(result_json, str):
             import json
             try:
+                # シングルクォートをダブルクォートに置換して解析
+                result_json = result_json.replace("'", '"')
                 result_json = json.loads(result_json)
-            except json.JSONDecodeError:
+            except json.JSONDecodeError as e:
+                print(f"JSON解析エラー: {e}")
+                print(f"解析対象の文字列: {result_json}")
                 result_json = {}
+
+        # デバッグ用：result_jsonの内容を確認
+        print(f"解析後のResult JSON: {result_json}")
 
         return cls(
             id=data['id'],
@@ -50,14 +57,15 @@ class TableItem:
             character_gender=data.get('character_gender'),
             character_age_group=data.get('character_age_group'),
             character_body_type=data.get('character_body_type'),
-            scene=result_json.get('Appropriate Scene'),
-            movement_description=result_json.get('Overall Movement Description'),
-            posture_detail=result_json.get('Posture Detail'),
-            initial_pose=result_json.get('Initial Pose'),
-            final_pose=result_json.get('Final Pose'),
-            intensity=result_json.get('Intensity Force'),
-            tempo=result_json.get('Tempo Speed'),
-            loopable=result_json.get('Loopable'),
+            # 動作関連の情報を正しく取得
+            scene=result_json.get('Appropriate Scene', ''),
+            movement_description=result_json.get('Overall Movement Description', ''),
+            posture_detail=result_json.get('Posture Detail', ''),
+            initial_pose=result_json.get('Initial Pose', ''),
+            final_pose=result_json.get('Final Pose', ''),
+            intensity=result_json.get('Intensity Force', ''),
+            tempo=result_json.get('Tempo Speed', ''),
+            loopable=result_json.get('Loopable', ''),
             tags=tags
         )
 

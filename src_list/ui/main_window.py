@@ -118,12 +118,12 @@ class MainWindow(QMainWindow):
             index (QModelIndex): クリックされた位置
         """
         column = index.column()
-        if column in [5, 6, 7, 8]:  # シーン、強度、テンポ、ループ可能
+        if column in [5, 6, 7, 8, 9, 10, 11, 12]:  # シーン、強度、テンポ、ループ可能、動作概要、姿勢詳細、開始姿勢、終了姿勢
             item = self.table.item(index.row(), column)
             if item:
                 item.setFlags(item.flags() | Qt.ItemIsEditable)
                 self.table.editItem(item)
-        elif column == 9:  # その他タグ
+        elif column == 13:  # その他タグ
             self.table.edit_tags(index.row())
 
     def _on_tag_edited(self, video_id: int, new_tags: list):

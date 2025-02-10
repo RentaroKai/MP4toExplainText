@@ -50,7 +50,11 @@ class DatabaseManager:
                 GROUP BY v.id
             """)
             columns = [description[0] for description in self._cursor.description]
-            return [dict(zip(columns, row)) for row in self._cursor.fetchall()]
+            # デバッグ用：取得したデータの内容を確認
+            rows = self._cursor.fetchall()
+            for row in rows:
+                print(f"Row data: {dict(zip(columns, row))}")
+            return [dict(zip(columns, row)) for row in rows]
         except sqlite3.Error as e:
             print(f"データ取得エラー: {e}")
             return []

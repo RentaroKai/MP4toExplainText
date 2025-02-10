@@ -558,6 +558,13 @@ class MainWindow(QMainWindow):
         api_key_action = settings_menu.addAction("Set API Key")
         api_key_action.triggered.connect(self.set_api_key)
         
+        # Windowメニュー
+        window_menu = menubar.addMenu("Window")
+        
+        # モーションリスト管理を開く
+        motion_list_action = window_menu.addAction("Open Motion List")
+        motion_list_action.triggered.connect(self.open_motion_list)
+        
         # ヘルプメニュー
         help_menu = menubar.addMenu("Help")
         about_action = help_menu.addAction("About")
@@ -647,4 +654,15 @@ Visit our website for more help.
                 self,
                 "エラー",
                 f"フォルダを開けませんでした:\n{str(e)}"
-            ) 
+            )
+
+    def open_motion_list(self):
+        """モーションリスト管理ウィンドウを開く"""
+        try:
+            # 既存のQApplicationを使用して新しいウィンドウを作成
+            from src_list.ui.main_window import MainWindow as MotionListWindow
+            self.motion_list_window = MotionListWindow()
+            self.motion_list_window.show()
+        except Exception as e:
+            self.logger.error(f"モーションリスト管理の起動に失敗しました: {str(e)}")
+            QMessageBox.critical(self, "エラー", "モーションリスト管理の起動に失敗しました。\n詳細はログを確認してください。") 
