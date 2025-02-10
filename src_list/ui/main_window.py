@@ -57,6 +57,7 @@ class MainWindow(QMainWindow):
         self.table = CustomTableWidget()
         self.table.doubleClicked.connect(self._on_table_double_clicked)
         self.table.tag_edited.connect(self._on_tag_edited)
+        self.table.character_info_edited.connect(self._on_character_info_edited)
         layout.addWidget(self.table)
 
         # ステータスバー
@@ -148,4 +149,24 @@ class MainWindow(QMainWindow):
                     self,
                     "警告",
                     "タグの更新に失敗しました"
+                )
+
+    def _on_character_info_edited(self, video_id: int, gender: str, age_group: str, body_type: str):
+        """
+        キャラクター情報が編集された時の処理
+        Args:
+            video_id (int): 動画ID
+            gender (str): 性別
+            age_group (str): 年齢層
+            body_type (str): 体型
+        """
+        if self.data_manager:
+            success = self.data_manager.update_character_info(video_id, gender, age_group, body_type)
+            if success:
+                self.statusBar().showMessage("キャラクター情報を更新しました")
+            else:
+                QMessageBox.warning(
+                    self,
+                    "警告",
+                    "キャラクター情報の更新に失敗しました"
                 ) 

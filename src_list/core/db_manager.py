@@ -1,6 +1,7 @@
 import sqlite3
 from datetime import datetime
 from typing import List, Dict, Any, Optional
+import json
 
 class DatabaseManager:
     def __init__(self, db_path: str):
@@ -34,6 +35,7 @@ class DatabaseManager:
             List[Dict[str, Any]]: 動画情報のリスト
         """
         try:
+            print("=== データベース取得開始 ===")
             self._cursor.execute("""
                 SELECT 
                     v.id,
@@ -51,16 +53,23 @@ class DatabaseManager:
                 GROUP BY v.id
             """)
             columns = [description[0] for description in self._cursor.description]
+            print(f"カラム名: {columns}")
+            
             # デバッグ用：取得したデータの内容を確認
             rows = self._cursor.fetchall()
-            print("=== デバッグ情報 ===")
-            print(f"カラム名: {columns}")
+            result = []
             for row in rows:
-                print(f"行データ: {dict(zip(columns, row))}")
-                print(f"性別: {row[3]}, 年齢: {row[4]}, 体型: {row[5]}")
-                print(f"アニメーションファイル名: {row[6]}")
-                print("---")
-            return [dict(zip(columns, row)) for row in rows]
+                row_dict = dict(zip(columns, row))
+                print(f"\n行データ: {row_dict}")
+                print(f"性別: {row_dict.get('character_gender')}")
+                print(f"年齢: {row_dict.get('character_age_group')}")
+                print(f"体型: {row_dict.get('character_body_type')}")
+                print(f"アニメーションファイル名: {row_dict.get('animation_file_name')}")
+                result.append(row_dict)
+            
+            print("=== データベース取得終了 ===")
+            return result
+            
         except sqlite3.Error as e:
             print(f"データ取得エラー: {e}")
             return []
@@ -88,6 +97,51 @@ class DatabaseManager:
             self._connection.commit()
         except sqlite3.Error as e:
             print(f"タグ更新エラー: {e}")
+            self._connection.rollback()
+            raise
+
+    def update_character_info(self, video_id: int, gender: str, age_group: str, body_type: str):
+        """
+        キャラクター情報を更新
+        Args:
+            video_id (int): 動画ID
+            gender (str): 性別
+            age_group (str): 年齢層
+            body_type (str): 体型
+        """
+        try:
+            # 既存のresult_jsonを取得
+            self._cursor.execute("""
+                SELECT result_json
+                FROM analysis_results
+                WHERE video_id = ?
+            """, (video_id,))
+            
+            row = self._cursor.fetchone()
+            if row:
+                result_json = row[0]
+                if isinstance(result_json, str):
+                    result_json = result_json.replace("'", '"')
+                    result_json = json.loads(result_json)
+                
+                # キャラクター情報を更新
+                result_json['character_gender'] = gender
+                result_json['character_age_group'] = age_group
+                result_json['character_body_type'] = body_type
+                
+                # 更新を実行
+                self._cursor.execute("""
+                    UPDATE analysis_results
+                    SET result_json = ?
+                    WHERE video_id = ?
+                """, (json.dumps(result_json), video_id))
+                
+                self._connection.commit()
+            else:
+                print(f"video_id {video_id} の解析結果が見つかりません")
+                
+        except sqlite3.Error as e:
+            print(f"キャラクター情報更新エラー: {e}")
             self._connection.rollback()
             raise
 

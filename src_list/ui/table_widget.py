@@ -5,11 +5,13 @@ from ..models.table_item import TableItem
 
 class CustomTableWidget(QTableWidget):
     tag_edited = Signal(int, list)  # video_id, new_tags
+    character_info_edited = Signal(int, str, str, str)  # video_id, gender, age_group, body_type
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self._setup_ui()
         self._current_items = []
+        self.itemChanged.connect(self.on_item_changed)
 
     def _setup_ui(self):
         """テーブルUIの初期設定"""
@@ -48,59 +50,74 @@ class CustomTableWidget(QTableWidget):
         Args:
             items (List[TableItem]): 表示するアイテムのリスト
         """
+        # ソート機能を一時的に無効化
+        self.setSortingEnabled(False)
+        
+        # シグナルを一時的に切断
+        self.itemChanged.disconnect(self.on_item_changed)
+        
         self._current_items = items
         self.setRowCount(len(items))
         
-        for row, item in enumerate(items):
-            # 基本情報
-            self.setItem(row, 0, self._create_item(str(item.id)))
-            self.setItem(row, 1, self._create_item(item.file_name))
-            self.setItem(row, 2, self._create_item(item.character_gender or ''))
-            self.setItem(row, 3, self._create_item(item.character_age_group or ''))
-            self.setItem(row, 4, self._create_item(item.character_body_type or ''))
+        try:
+            for row, item in enumerate(items):
+                # 基本情報
+                self.setItem(row, 0, self._create_item(str(item.id)))
+                self.setItem(row, 1, self._create_item(item.file_name))
+                # 性別、年齢、体型は編集可能に
+                self.setItem(row, 2, self._create_item(item.character_gender or '', True))
+                self.setItem(row, 3, self._create_item(item.character_age_group or '', True))
+                self.setItem(row, 4, self._create_item(item.character_body_type or '', True))
 
-            # タグから情報を抽出
-            scene = ''
-            intensity = ''
-            tempo = ''
-            loopable = ''
-            other_tags = []
+                # タグから情報を抽出
+                scene = ''
+                intensity = ''
+                tempo = ''
+                loopable = ''
+                other_tags = []
 
-            if item.tags:
-                for tag in item.tags:
-                    if tag.startswith('scene:'):
-                        scene = tag.replace('scene:', '')
-                    elif tag.startswith('intensity:'):
-                        intensity = tag.replace('intensity:', '')
-                    elif tag.startswith('tempo:'):
-                        tempo = tag.replace('tempo:', '')
-                    elif tag.startswith('loopable:'):
-                        loopable = tag.replace('loopable:', '')
-                    else:
-                        other_tags.append(tag)
+                if item.tags:
+                    for tag in item.tags:
+                        if tag.startswith('scene:'):
+                            scene = tag.replace('scene:', '')
+                        elif tag.startswith('intensity:'):
+                            intensity = tag.replace('intensity:', '')
+                        elif tag.startswith('tempo:'):
+                            tempo = tag.replace('tempo:', '')
+                        elif tag.startswith('loopable:'):
+                            loopable = tag.replace('loopable:', '')
+                        else:
+                            other_tags.append(tag)
 
-            # 抽出した情報を設定
-            self.setItem(row, 5, self._create_item(scene))
-            self.setItem(row, 6, self._create_item(intensity))
-            self.setItem(row, 7, self._create_item(tempo))
-            self.setItem(row, 8, self._create_item(loopable))
-            self.setItem(row, 9, self._create_item(item.movement_description or ''))
-            self.setItem(row, 10, self._create_item(item.posture_detail or ''))
-            self.setItem(row, 11, self._create_item(item.initial_pose or ''))
-            self.setItem(row, 12, self._create_item(item.final_pose or ''))
-            self.setItem(row, 13, self._create_item(item.animation_file_name or ''))
-            self.setItem(row, 14, self._create_item(', '.join(other_tags)))
+                # 抽出した情報を設定
+                self.setItem(row, 5, self._create_item(scene))
+                self.setItem(row, 6, self._create_item(intensity))
+                self.setItem(row, 7, self._create_item(tempo))
+                self.setItem(row, 8, self._create_item(loopable))
+                self.setItem(row, 9, self._create_item(item.movement_description or ''))
+                self.setItem(row, 10, self._create_item(item.posture_detail or ''))
+                self.setItem(row, 11, self._create_item(item.initial_pose or ''))
+                self.setItem(row, 12, self._create_item(item.final_pose or ''))
+                self.setItem(row, 13, self._create_item(item.animation_file_name or ''))
+                self.setItem(row, 14, self._create_item(', '.join(other_tags)))
+        finally:
+            # シグナルを再接続
+            self.itemChanged.connect(self.on_item_changed)
+            # ソート機能を再度有効化
+            self.setSortingEnabled(True)
 
-    def _create_item(self, text: str) -> QTableWidgetItem:
+    def _create_item(self, text: str, editable: bool = False) -> QTableWidgetItem:
         """
         テーブルアイテムを作成
         Args:
             text (str): 表示するテキスト
+            editable (bool): 編集可能かどうか
         Returns:
             QTableWidgetItem: 作成されたアイテム
         """
         item = QTableWidgetItem(text)
-        item.setFlags(item.flags() & ~Qt.ItemIsEditable)  # 編集不可に設定
+        if not editable:
+            item.setFlags(item.flags() & ~Qt.ItemIsEditable)
         return item
 
     def edit_tags(self, row: int):
@@ -120,20 +137,58 @@ class CustomTableWidget(QTableWidget):
         Args:
             item (QTableWidgetItem): 変更されたアイテム
         """
-        if item.column() == 14:  # その他タグカラム
-            row = item.row()
-            video_id = int(self.item(row, 0).text())
-            # 既存のタグを保持
-            scene = f"scene:{self.item(row, 5).text()}" if self.item(row, 5).text() else ''
-            intensity = f"intensity:{self.item(row, 6).text()}" if self.item(row, 6).text() else ''
-            tempo = f"tempo:{self.item(row, 7).text()}" if self.item(row, 7).text() else ''
-            loopable = f"loopable:{self.item(row, 8).text()}" if self.item(row, 8).text() else ''
+        if not item:
+            return
             
-            # その他タグを追加
-            other_tags = [tag.strip() for tag in item.text().split(',') if tag.strip()]
+        row = item.row()
+        column = item.column()
+        
+        if column in [2, 3, 4]:  # 性別、年齢、体型の列
+            try:
+                video_id = int(self.item(row, 0).text() if self.item(row, 0) else 0)
+                if video_id == 0:
+                    return
+                    
+                # 現在の値を取得（Noneの場合は空文字を使用）
+                gender = self.item(row, 2).text() if self.item(row, 2) else ''
+                age_group = self.item(row, 3).text() if self.item(row, 3) else ''
+                body_type = self.item(row, 4).text() if self.item(row, 4) else ''
+                
+                # 編集された列の値を更新
+                if column == 2:
+                    gender = item.text()
+                elif column == 3:
+                    age_group = item.text()
+                elif column == 4:
+                    body_type = item.text()
+                
+                print(f"キャラクター情報を更新: ID={video_id}, 性別={gender}, 年齢={age_group}, 体型={body_type}")
+                self.character_info_edited.emit(video_id, gender, age_group, body_type)
+                
+            except (ValueError, AttributeError) as e:
+                print(f"キャラクター情報の更新中にエラーが発生: {e}")
             
-            # すべてのタグを結合
-            new_tags = [tag for tag in [scene, intensity, tempo, loopable] + other_tags if tag]
-            
-            self.tag_edited.emit(video_id, new_tags)
-            item.setFlags(item.flags() & ~Qt.ItemIsEditable)  # 編集モードを解除 
+        elif column == 14:  # その他タグカラム
+            try:
+                video_id = int(self.item(row, 0).text() if self.item(row, 0) else 0)
+                if video_id == 0:
+                    return
+                    
+                # 既存のタグを保持
+                scene = f"scene:{self.item(row, 5).text()}" if self.item(row, 5) and self.item(row, 5).text() else ''
+                intensity = f"intensity:{self.item(row, 6).text()}" if self.item(row, 6) and self.item(row, 6).text() else ''
+                tempo = f"tempo:{self.item(row, 7).text()}" if self.item(row, 7) and self.item(row, 7).text() else ''
+                loopable = f"loopable:{self.item(row, 8).text()}" if self.item(row, 8) and self.item(row, 8).text() else ''
+                
+                # その他タグを追加
+                other_tags = [tag.strip() for tag in item.text().split(',') if tag.strip()]
+                
+                # すべてのタグを結合
+                new_tags = [tag for tag in [scene, intensity, tempo, loopable] + other_tags if tag]
+                
+                print(f"タグを更新: ID={video_id}, タグ={new_tags}")
+                self.tag_edited.emit(video_id, new_tags)
+                item.setFlags(item.flags() & ~Qt.ItemIsEditable)  # 編集モードを解除
+                
+            except (ValueError, AttributeError) as e:
+                print(f"タグの更新中にエラーが発生: {e}") 

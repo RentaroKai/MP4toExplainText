@@ -86,4 +86,33 @@ class DataManager:
                     if str(video.get(key, '')).lower() == str(value).lower()
                 ]
         
-        return filtered_videos 
+        return filtered_videos
+
+    def update_character_info(self, video_id: int, gender: str, age_group: str, body_type: str) -> bool:
+        """
+        キャラクター情報を更新
+        Args:
+            video_id (int): 動画ID
+            gender (str): 性別
+            age_group (str): 年齢層
+            body_type (str): 体型
+        Returns:
+            bool: 更新が成功したかどうか
+        """
+        try:
+            with self._db_manager as db:
+                db.update_character_info(video_id, gender, age_group, body_type)
+            
+            # キャッシュを更新
+            if 'videos' in self._cache:
+                for video in self._cache['videos']:
+                    if video['id'] == video_id:
+                        video['character_gender'] = gender
+                        video['character_age_group'] = age_group
+                        video['character_body_type'] = body_type
+                        break
+            
+            return True
+        except Exception as e:
+            print(f"キャラクター情報更新中にエラーが発生しました: {e}")
+            return False 

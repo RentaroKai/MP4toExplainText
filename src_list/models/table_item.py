@@ -31,9 +31,13 @@ class TableItem:
         Returns:
             TableItem: 新しいTableItemインスタンス
         """
+        print("=== TableItem変換開始 ===")
+        print(f"入力データ: {data}")
+        
         # タグ文字列を配列に変換
         tags = data.get('tags', '').split(',') if data.get('tags') else []
         tags = [tag.strip() for tag in tags if tag.strip()]
+        print(f"変換後のタグ: {tags}")
 
         # 動作関連の情報をJSONから取得
         result_json = data.get('result_json', '{}')
@@ -48,10 +52,10 @@ class TableItem:
                 print(f"解析対象の文字列: {result_json}")
                 result_json = {}
 
-        # デバッグ用：result_jsonの内容を確認
         print(f"解析後のResult JSON: {result_json}")
+        print(f"キャラクター情報: gender={data.get('character_gender')}, age={data.get('character_age_group')}, body={data.get('character_body_type')}")
 
-        return cls(
+        instance = cls(
             id=data['id'],
             file_path=data['file_path'],
             file_name=data['file_name'],
@@ -70,6 +74,9 @@ class TableItem:
             animation_file_name=result_json.get('Name of AnimationFile', ''),
             tags=tags
         )
+        print(f"生成されたインスタンス: {instance}")
+        print("=== TableItem変換終了 ===")
+        return instance
 
     def to_dict(self) -> Dict[str, Any]:
         """
