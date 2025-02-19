@@ -8,7 +8,8 @@ from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QCheckBox, QTableWidget, QTableWidgetItem,
     QLabel, QProgressBar, QFileDialog, QMessageBox,
-    QMenuBar, QMenu, QInputDialog, QDialog, QLineEdit, QDialogButtonBox
+    QMenuBar, QMenu, QInputDialog, QDialog, QLineEdit, QDialogButtonBox,
+    QComboBox
 )
 from PySide6.QtCore import Qt, QMimeData, Signal, QObject, QTimer
 from PySide6.QtGui import QDragEnterEvent, QDropEvent
@@ -16,6 +17,7 @@ from src.core.config_manager import ConfigManager
 from src.core.video_processor import VideoProcessor
 from src.core.database import Database
 from src.core.export_manager import ExportManager
+from src.core.prompt_manager import PromptManager
 from typing import List
 from src_list.ui.main_window import MainWindow as MotionListWindow
 
@@ -34,6 +36,7 @@ class MainWindow(QMainWindow):
         self.processor = VideoProcessor()
         self.signal_emitter = SignalEmitter()
         self.export_manager = ExportManager(self.config, self.db)
+        self.prompt_manager = PromptManager()
         self.current_filter = ""  # フィルタ文字列を保持
         
         # シグナルの接続
@@ -54,6 +57,7 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(main_widget)
         
         # UIコンポーネントの設定
+        self.setup_prompt_selector(layout)
         self.setup_drag_drop_area(layout)
         self.setup_filter_area(layout)  # フィルタエリアを追加
         self.setup_auto_process_switch(layout)
@@ -101,6 +105,53 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.logger.error(f"初期データの読み込み中にエラーが発生しました: {str(e)}")
             self.show_error("データの読み込みに失敗しました")
+    
+    def setup_prompt_selector(self, layout):
+        """プロンプト設定選択用のコンボボックスを設定"""
+        prompt_layout = QHBoxLayout()
+        
+        # ラベル
+        label = QLabel("プロンプト設定:")
+        prompt_layout.addWidget(label)
+        
+        # コンボボックス
+        self.prompt_combo = QComboBox()
+        self.update_prompt_list()
+        self.prompt_combo.currentTextChanged.connect(self.on_prompt_changed)
+        prompt_layout.addWidget(self.prompt_combo)
+        
+        # 更新ボタン
+        refresh_button = QPushButton("更新")
+        refresh_button.clicked.connect(self.update_prompt_list)
+        prompt_layout.addWidget(refresh_button)
+        
+        # 右側に余白を追加
+        prompt_layout.addStretch()
+        
+        layout.addLayout(prompt_layout)
+    
+    def update_prompt_list(self):
+        """プロンプト設定の一覧を更新"""
+        current = self.prompt_combo.currentText()
+        self.prompt_combo.clear()
+        
+        configs = self.prompt_manager.get_available_configs()
+        self.prompt_combo.addItems(configs)
+        
+        # 以前選択されていた項目があれば復元
+        if current in configs:
+            self.prompt_combo.setCurrentText(current)
+        elif "default" in configs:
+            self.prompt_combo.setCurrentText("default")
+    
+    def on_prompt_changed(self, config_name: str):
+        """プロンプト設定が変更された時の処理"""
+        try:
+            self.prompt_manager.load_config(config_name)
+            self.logger.info(f"プロンプト設定を変更: {config_name}")
+        except Exception as e:
+            self.logger.error(f"プロンプト設定の読み込みに失敗: {str(e)}")
+            self.show_error(f"プロンプト設定の読み込みに失敗しました:\n{str(e)}")
     
     def setup_drag_drop_area(self, parent_layout):
         """ドラッグ＆ドロップエリアの設定"""

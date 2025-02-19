@@ -6,6 +6,7 @@ from typing import Dict, Optional
 import google.generativeai as genai
 from google.ai.generativelanguage_v1beta.types import content
 from src.core.config_manager import ConfigManager
+from src.core.prompt_manager import PromptManager
 import certifi
 
 class GeminiAPI:
@@ -14,6 +15,7 @@ class GeminiAPI:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self.config = ConfigManager()
+        self.prompt_manager = PromptManager()
         self._setup_api()
         self._setup_model()
     
@@ -30,6 +32,22 @@ class GeminiAPI:
         
         genai.configure(api_key=api_key)
     
+    # def _setup_model(self):
+    #     """Geminiモデルの設定"""
+    #     generation_config = {
+    #         "temperature": 1,
+    #         "top_p": 0.95,
+    #         "top_k": 40,
+    #         "max_output_tokens": 8192,
+    #         "response_mime_type": "application/json",
+    #     }
+
+    #     self.model = genai.GenerativeModel(
+    #         model_name="gemini-2.0-flash",
+    #         generation_config=generation_config,
+    #         system_instruction="Analyze the actions of people in the video and return the results in JSON format."
+    #     )
+
     def _setup_model(self):
         """Geminiモデルの設定"""
         generation_config = {
@@ -90,22 +108,23 @@ class GeminiAPI:
             system_instruction="""
             Analyze the actions of people in the video and return the results in JSON format.
             Keep the response concise and avoid unnecessary details.
-            
             # Required Fields:
-            - Animation File Name (in English, around 16 characters)
-            - Character Gender (suitable character_gender for the movement: male, female, both, any; if the determination is ambiguous, any is acceptable)
-            - Character Age Group (suitable character_Age_Group for the movement: young, adult, elderly, child, any; if the determination is unclear, any is acceptable)
-            - Character Body Type (suitable Character_Body_Type for the movement: muscular, any; if a clear assessment cannot be made, any is acceptable)
-            - Overall Movement Description (a brief description of the movement, 50-120 characters)
-            - Initial Pose (starting pose, up to 30 characters)
-            - Final Pose (ending pose, up to 30 characters)
-            - Appropriate Scene (e.g., daily life, combat, etc.)
-            - Loopable (The first and last poses match exactly in position and angle, making the loop unnoticeable even when played endlessly. e.g., Yes/No)
-            - Tempo Speed (e.g., Fast-paced, Moderate, Slow)
-            - Intensity Force (e.g., High Impact, Subtle)
-            - Posture Detail (detailed description of posture and body movement changes, 16-100 characters)
+            - Animation File Name 
+            - Character Gender
+            - Character Age Group
+            - Character Body Type
+            - Overall Movement Description
+            - Initial Pose 
+            - Final Pose
+            - Appropriate Scene 
+            - Loopable
+            - Tempo Speed
+            - Intensity Force
+            - Posture Detail 
             """
         )
+    
+
     
     def upload_video(self, video_path: str) -> Optional[genai.types.File]:
         """動画ファイルをGeminiにアップロード"""
@@ -147,33 +166,26 @@ class GeminiAPI:
             self.logger.error(f"ファイル処理の待機中にエラーが発生しました: {str(e)}")
             raise
     
-    def analyze_video(self, video_path: str) -> Dict:
+    def analyze_video(self, video_path: str, config_name: str = "default") -> Dict:
         """動画を解析して結果を返す"""
         try:
+            # プロンプト設定の読み込み
+            self.prompt_manager.load_config(config_name)
+            
             # 動画のアップロード
             video_file = self.upload_video(video_path)
             
             # 処理完了を待機
             self.wait_for_processing(video_file)
             
+            # プロンプトの生成
+            prompt = self.prompt_manager.generate_prompt(video_path)
+            if not prompt:
+                raise ValueError("プロンプトの生成に失敗しました")
+            
             # チャットセッションの開始と解析
             chat = self.model.start_chat()
-            response = chat.send_message([
-                video_file,
-                "この動画の動作を解析して、以下の情報を含むJSONで返してください：\n"
-                "- Name of AnimationFile: 動画の名前（英語、16文字程度）\n"
-                "- Character Gender: この動作に適した性別（男性、女性、両方、どちらでも可）\n"
-                "- Character Age Group: この動作に適した年齢層（若者、成人、高齢者、子供）\n"
-                "- Character Body Type: この動作に適した体型（平均、筋肉質、スリム）\n"
-                "- Overall Movement Description: 動作の説明（50-120文字）\n"
-                "- Initial Pose: 開始ポーズ（30文字以内）\n"
-                "- Final Pose: 終了ポーズ（30文字以内）\n"
-                "- Appropriate Scene: 適切なシーン（例：日常生活、戦闘など）\n"
-                "- Loopable: ループ可能か（Yes/No）\n"
-                "- Tempo Speed: テンポ（Fast-paced/Moderate/Slow）\n"
-                "- Intensity Force: 動きの強さ（High Impact/Subtle）\n"
-                "- Posture Detail: 姿勢の詳細（16-100文字）"
-            ])
+            response = chat.send_message([video_file, prompt])
             
             # レスポンスの解析
             result = eval(response.text)  # JSON文字列を辞書に変換

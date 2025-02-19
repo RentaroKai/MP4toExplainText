@@ -1,0 +1,70 @@
+{
+  "fields": {
+    "Name of AnimationFile": {
+      "description": "Name of the animation (short name)",
+      "type": "string",
+      "required": true
+    },
+    "Character Gender": {
+      "description": "Suitable gender for the movement",
+      "type": "string",
+      "required": true,
+      "options": ["male", "female", "any"]
+    },
+    "Character Age Group": {
+      "description": "Suitable age group for the movement",
+      "type": "string",
+      "required": true,
+      "options": ["adult", "elderly", "child", "any"]
+    },
+    "Character Body Type": {
+      "description": "Suitable body type for the movement",
+      "type": "string",
+      "required": true,
+      "options": ["average", "muscular", "Feminine glamour", "any"]
+    },
+    "Overall Movement Description": {
+      "description": "Overall description of the movement (30 characters)",
+      "type": "string",
+      "required": true
+    },
+    "Initial Pose": {
+      "description": "Starting pose (short description)",
+      "type": "string",
+      "required": true
+    },
+    "Final Pose": {
+      "description": "Ending pose (short description)",
+      "type": "string",
+      "required": true
+    },
+    "Appropriate Scene": {
+      "description": "Appropriate scene (e.g., daily life, combat, etc.)",
+      "type": "string",
+      "required": true
+    },
+    "Loopable": {
+      "description": "The first and last poses match exactly in position and angle, making the loop unnoticeable even when played endlessly. e.g., Yes/No",
+      "type": "string",
+      "required": true,
+      "options": ["Yes", "No"]
+    },
+    "Tempo Speed": {
+      "description": "Movement tempo",
+      "type": "string",
+      "required": true,
+      "options": ["Fast-paced", "Moderate", "Slow"]
+    },
+    "Intensity Force": {
+      "description": "Movement intensity",
+      "type": "string",
+      "required": true,
+      "options": ["High Impact", "Subtle"]
+    },
+    "Posture Detail": {
+      "description": "Detailed description of posture (16-100 characters)",
+      "type": "string",
+      "required": true
+    }
+  }
+} 

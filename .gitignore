@@ -41,3 +41,5 @@ GIT.jpg
 .cursor/rules/commitmessage.mdc
 .cursor/rules/moduledoc.mdc
 タブベースの仕様追加.md
+docs/prompt_externalization_spec.md
+src/core/old_gemini_api.py
