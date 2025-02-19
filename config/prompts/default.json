@@ -5,19 +5,19 @@
       "type": "string",
       "required": true
     },
-    "Character Gender": {
+    "character_gender": {
       "description": "Suitable gender for the movement",
       "type": "string",
       "required": true,
       "options": ["male", "female", "any"]
     },
-    "Character Age Group": {
+    "character_age_group": {
       "description": "Suitable age group for the movement",
       "type": "string",
       "required": true,
       "options": ["adult", "elderly", "child", "any"]
     },
-    "Character Body Type": {
+    "character_body_type": {
       "description": "Suitable body type for the movement",
       "type": "string",
       "required": true,

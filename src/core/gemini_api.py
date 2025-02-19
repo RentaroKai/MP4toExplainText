@@ -110,9 +110,9 @@ class GeminiAPI:
             Keep the response concise and avoid unnecessary details.
             # Required Fields:
             - Animation File Name 
-            - Character Gender
-            - Character Age Group
-            - Character Body Type
+            - character_gender
+            - character_age_group
+            - character_body_type
             - Overall Movement Description
             - Initial Pose 
             - Final Pose
