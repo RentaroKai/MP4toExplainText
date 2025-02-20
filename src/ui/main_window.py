@@ -79,7 +79,9 @@ class MainWindow(QMainWindow):
         # 定期的な更新用タイマー
         self.update_timer = QTimer(self)
         self.update_timer.timeout.connect(self.refresh_table)
-        self.update_timer.start(5000)  # 5秒ごとに更新
+        print("=== タイマー設定 ===")
+        print("更新間隔: 30秒 (1分)")
+        self.update_timer.start(30000)  # 60秒（1分）ごとに更新に変更
         
         # 初期データの読み込み
         self.load_initial_data()

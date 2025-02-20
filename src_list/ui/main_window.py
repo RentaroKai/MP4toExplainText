@@ -135,11 +135,16 @@ class MainWindow(QMainWindow):
         """データを更新"""
         if self.data_manager:
             try:
+                print("=== データ更新開始 ===")
+                print(f"更新前の選択行: {[item.row() for item in self.table.selectedItems()]}")
                 videos = self.data_manager.load_all_videos()
                 items = [TableItem.from_dict(video) for video in videos]
                 self.table.update_data(items)
+                print(f"更新後の選択行: {[item.row() for item in self.table.selectedItems()]}")
                 self.statusBar().showMessage("データ更新完了")
+                print("=== データ更新完了 ===")
             except Exception as e:
+                print(f"データ更新エラー: {str(e)}")
                 QMessageBox.warning(
                     self,
                     "警告",
@@ -179,16 +184,22 @@ class MainWindow(QMainWindow):
             video_id (int): 動画ID
             new_tags (list): 新しいタグリスト
         """
+        print(f"=== タグ編集開始: video_id={video_id} ===")
+        print(f"編集前の選択行: {[item.row() for item in self.table.selectedItems()]}")
         if self.data_manager:
             success = self.data_manager.update_video_tags(video_id, new_tags)
             if success:
+                print("タグ更新成功")
                 self.statusBar().showMessage("タグを更新しました")
             else:
+                print("タグ更新失敗")
                 QMessageBox.warning(
                     self,
                     "警告",
                     "タグの更新に失敗しました"
                 )
+        print(f"編集後の選択行: {[item.row() for item in self.table.selectedItems()]}")
+        print("=== タグ編集完了 ===")
 
     def _on_character_info_edited(self, video_id: int, gender: str, age_group: str, body_type: str):
         """

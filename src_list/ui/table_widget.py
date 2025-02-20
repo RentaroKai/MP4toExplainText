@@ -2,6 +2,7 @@ from PySide6.QtWidgets import QTableWidget, QTableWidgetItem, QHeaderView
 from PySide6.QtCore import Qt, Signal
 from typing import List, Dict, Any
 from ..models.table_item import TableItem
+from datetime import datetime
 
 class CustomTableWidget(QTableWidget):
     tag_edited = Signal(int, list)  # video_id, new_tags
@@ -50,6 +51,10 @@ class CustomTableWidget(QTableWidget):
         Args:
             items (List[TableItem]): 表示するアイテムのリスト
         """
+        current_time = datetime.now().strftime('%H:%M:%S.%f')[:-3]
+        print(f"=== テーブル更新開始 [{current_time}] ===")
+        print(f"現在選択されている行: {[item.row() for item in self.selectedItems()]}")
+        
         # ソート機能を一時的に無効化
         self.setSortingEnabled(False)
         
@@ -101,6 +106,9 @@ class CustomTableWidget(QTableWidget):
                 self.setItem(row, 13, self._create_item(item.animation_file_name or ''))
                 self.setItem(row, 14, self._create_item(', '.join(other_tags)))
         finally:
+            current_time = datetime.now().strftime('%H:%M:%S.%f')[:-3]
+            print(f"=== テーブル更新完了 [{current_time}] ===")
+            print(f"更新後の選択されている行: {[item.row() for item in self.selectedItems()]}")
             # シグナルを再接続
             self.itemChanged.connect(self.on_item_changed)
             # ソート機能を再度有効化
@@ -192,3 +200,29 @@ class CustomTableWidget(QTableWidget):
                 
             except (ValueError, AttributeError) as e:
                 print(f"タグの更新中にエラーが発生: {e}") 
+
+    def refresh_table(self):
+        """テーブルの定期更新"""
+        try:
+            current_time = datetime.now().strftime('%H:%M:%S.%f')[:-3]
+            print(f"=== テーブル再描画開始 [{current_time}] ===")
+            print(f"再描画前の選択行: {[item.row() for item in self.selectedItems()]}")
+            videos = self.db.get_all_videos()
+            
+            # 現在のテーブルの状態を保存
+            selected_rows = [item.row() for item in self.selectedItems()]
+            scroll_position = self.table.verticalScrollBar().value()
+            
+            print(f"保存した選択行: {selected_rows}")
+            self.update_data(videos)
+            
+            # 選択状態を復元
+            for row in selected_rows:
+                if row < self.table.rowCount():
+                    self.table.selectRow(row)
+            
+            print(f"再描画後の選択行: {[item.row() for item in self.selectedItems()]}")
+            # スクロール位置を復元
+            self.table.verticalScrollBar().setValue(scroll_position)
+        except Exception as e:
+            print(f"テーブルの再描画中にエラーが発生: {e}") 

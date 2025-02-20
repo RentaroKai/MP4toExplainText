@@ -1,0 +1,70 @@
+{
+  "fields": {
+    "Name of AnimationFile": {
+      "description": "動きの名前",
+      "type": "string",
+      "required": true
+    },
+    "character_gender": {
+      "description": "モーションを適用可能な性別(問題なければ「問わない」にする)",
+      "type": "string",
+      "required": true,
+      "options": ["男", "女", "問わない"]
+    },
+    "character_age_group": {
+      "description": "モーションを適用可能な体型（問題なければ問わないにする）",
+      "type": "string",
+      "required": true,
+      "options": ["マッチョ", "ふつう", "グラマー", "問わない"]
+    },
+    "character_body_type": {
+      "description": "Suitable body type for the movement",
+      "type": "string",
+      "required": true,
+      "options": ["average", "muscular", "Feminine glamour", "any"]
+    },
+    "Overall Movement Description": {
+      "description": "動きのざっくりとした説明",
+      "type": "string",
+      "required": true
+    },
+    "Initial Pose": {
+      "description": "開始ポーズ（一言で説明）",
+      "type": "string",
+      "required": true
+    },
+    "Final Pose": {
+      "description": "終了ポーズ（一言で説明）",
+      "type": "string",
+      "required": true
+    },
+    "Appropriate Scene": {
+      "description": "モーションのジャンル（生活シーン・戦闘シーン・などなど）",
+      "type": "string",
+      "required": true
+    },
+    "Loopable": {
+      "description": "繰り返し再生(ループ再生)可能かどうか（Yes/No）",
+      "type": "string",
+      "required": true,
+      "options": ["Yes", "No"]
+    },
+    "Tempo Speed": {
+      "description": "動きのスピード",
+      "type": "string",
+      "required": true,
+      "options": ["速い", "ふつう", "ゆっくり"]
+    },
+    "Intensity Force": {
+      "description": "動きの強さ",
+      "type": "string",
+      "required": true,
+      "options": ["強い", "ふつう", "弱い"]
+    },
+    "Posture Detail": {
+      "description": "姿勢の厳密な説明",
+      "type": "string",
+      "required": true
+    }
+  }
+} 
