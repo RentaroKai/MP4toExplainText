@@ -8,10 +8,16 @@ from .table_widget import CustomTableWidget
 from ..core.data_manager import DataManager
 from ..models.table_item import TableItem
 import os
+import logging
+import datetime
 
 class MainWindow(QMainWindow):
     def __init__(self, db_path=None):
         super().__init__()
+        
+        # ログ設定
+        self._setup_logging()
+        
         self.setWindowTitle("モーションリスト管理")
         self.setGeometry(100, 100, 1200, 800)
         
@@ -24,6 +30,39 @@ class MainWindow(QMainWindow):
         # データベース接続
         if db_path:
             self._connect_database(db_path)
+
+    def _setup_logging(self):
+        """ログ設定を初期化"""
+        log_dir = "logs"
+        if not os.path.exists(log_dir):
+            os.makedirs(log_dir)
+            
+        log_file = os.path.join(log_dir, f"motion_list_{datetime.datetime.now().strftime('%Y%m%d')}.log")
+        
+        # ログフォーマットの設定
+        formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        )
+        
+        # ファイルハンドラの設定
+        file_handler = logging.FileHandler(log_file, encoding='utf-8')
+        file_handler.setFormatter(formatter)
+        file_handler.setLevel(logging.DEBUG)
+        
+        # コンソールハンドラの設定
+        console_handler = logging.StreamHandler()
+        console_handler.setFormatter(formatter)
+        console_handler.setLevel(logging.INFO)
+        
+        # ルートロガーの設定
+        root_logger = logging.getLogger()
+        root_logger.setLevel(logging.DEBUG)
+        root_logger.addHandler(file_handler)
+        root_logger.addHandler(console_handler)
+        
+        # このクラス用のロガー
+        self.logger = logging.getLogger(__name__)
+        self.logger.info("ログ設定を初期化しました")
 
     def _setup_ui(self):
         """UIの初期設定"""
