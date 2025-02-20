@@ -101,6 +101,7 @@ MotionTag/
 
 - ログの確認: `logs/motion_tag_[日付].log`
 - 分析結果: `exports/csv/`
+- exeを作る場合　pyinstaller MP4toExplainText.spec
 
 ## ライセンス
 
