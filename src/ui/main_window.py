@@ -138,18 +138,23 @@ class MainWindow(QMainWindow):
         self.prompt_combo.clear()
         
         configs = self.prompt_manager.get_available_configs()
+        self.logger.info(f"利用可能なプロンプト設定: {configs}")
         self.prompt_combo.addItems(configs)
         
         # 以前選択されていた項目があれば復元
         if current in configs:
             self.prompt_combo.setCurrentText(current)
+            self.logger.info(f"以前の設定を復元: {current}")
         elif "default" in configs:
             self.prompt_combo.setCurrentText("default")
+            self.logger.info("デフォルト設定を選択")
     
     def on_prompt_changed(self, config_name: str):
         """プロンプト設定が変更された時の処理"""
+        self.logger.info(f"プロンプト設定が変更されました: {config_name}")
         try:
             self.prompt_manager.load_config(config_name)
+            self.processor.set_prompt_config(config_name)  # VideoProcessorに設定を通知
             self.logger.info(f"プロンプト設定を変更: {config_name}")
         except Exception as e:
             self.logger.error(f"プロンプト設定の読み込みに失敗: {str(e)}")

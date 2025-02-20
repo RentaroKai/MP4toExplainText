@@ -1,7 +1,7 @@
 {
   "fields": {
     "Name of AnimationFile": {
-      "description": "動きの名前",
+      "description": "動きの名前を日本語でつけて",
       "type": "string",
       "required": true
     },

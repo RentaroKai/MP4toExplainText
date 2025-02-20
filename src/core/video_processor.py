@@ -21,6 +21,12 @@ class VideoProcessor:
         )
         self._processing = set()  # 処理中の動画ID
         self._cancel_requested = set()  # キャンセルが要求された動画ID
+        self.current_prompt_config = "default"  # 現在のプロンプト設定
+    
+    def set_prompt_config(self, config_name: str):
+        """プロンプト設定を変更"""
+        self.logger.info(f"プロンプト設定を変更: {config_name}")
+        self.current_prompt_config = config_name
     
     async def process_video(self, video_path: str, progress_callback: Optional[Callable] = None) -> bool:
         """動画を非同期で処理"""
@@ -58,8 +64,7 @@ class VideoProcessor:
                 loop = asyncio.get_event_loop()
                 result = await loop.run_in_executor(
                     self.executor,
-                    self.gemini.analyze_video,
-                    video_path
+                    lambda: self.gemini.analyze_video(video_path, self.current_prompt_config)
                 )
                 
                 # キャンセルされた場合
