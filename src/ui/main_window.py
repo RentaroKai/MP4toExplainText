@@ -44,8 +44,6 @@ class MainWindow(QMainWindow):
         self.prompt_manager = PromptManager()
         self.current_filter = ""  # フィルタ文字列を保持
         
-        self.has_unsaved_changes = False
-        
         self.signal_emitter.progress_updated.connect(self.update_progress)
         self.signal_emitter.status_updated.connect(self.update_status)
         self.signal_emitter.error_occurred.connect(self.show_error)
@@ -580,10 +578,6 @@ class MainWindow(QMainWindow):
     
     def closeEvent(self, event):
         """ウィンドウを閉じる際の処理"""
-        if self.has_unsaved_changes and not self.confirm_discard_changes():
-            event.ignore()
-            return
-            
         self.config.set_active_database(self.db.get_database_path())
         
         if hasattr(self, "loop") and self.loop.is_running():
@@ -760,7 +754,6 @@ Visit our website for more help.
         self.refresh_table()
         self.update_window_title()
         self.logger.info("データベース変更後の画面更新が完了しました")
-        self.has_unsaved_changes = False  # 変更フラグをリセット
     
     def update_recent_files_menu(self):
         """最近使用したファイルメニューを更新"""
@@ -790,10 +783,6 @@ Visit our website for more help.
     
     def create_new_database(self):
         """新しいデータベースファイルを作成"""
-        # 未保存の変更がある場合は確認
-        if self.has_unsaved_changes and not self.confirm_discard_changes():
-            return
-            
         # ファイル選択ダイアログ
         file_path, _ = QFileDialog.getSaveFileName(
             self, 
@@ -826,9 +815,6 @@ Visit our website for more help.
     
     def open_database(self):
         """既存のデータベースファイルを開く"""
-        if self.has_unsaved_changes and not self.confirm_discard_changes():
-            return
-            
         file_path, _ = QFileDialog.getOpenFileName(
             self, 
             "データベースを開く", 
@@ -865,9 +851,6 @@ Visit our website for more help.
     
     def close_database(self):
         """現在のデータベースを閉じてデフォルトのデータベースに戻る"""
-        if self.has_unsaved_changes and not self.confirm_discard_changes():
-            return
-            
         try:
             default_db_path = self.config.get_paths()["db_path"]
             self.logger.debug(f"デフォルトデータベースに戻ります: {default_db_path}")
@@ -890,20 +873,12 @@ Visit our website for more help.
     
     def confirm_discard_changes(self):
         """未保存の変更を破棄するか確認"""
-        reply = QMessageBox.question(
-            self, 
-            "確認", 
-            "保存されていない変更があります。変更を破棄してもよろしいですか？",
-            QMessageBox.Yes | QMessageBox.No, 
-            QMessageBox.No
-        )
-        return reply == QMessageBox.Yes
+        return True
 
     def set_video_status(self, video_id, status):
         """ビデオのステータスを設定"""
         try:
             self.db.update_video_status(video_id, status)
-            self.has_unsaved_changes = True  # 変更フラグをセット
             self.refresh_table()
         except Exception as e:
             self.logger.error(f"ビデオステータス更新中にエラーが発生: {str(e)}", exc_info=True)
@@ -925,7 +900,6 @@ Visit our website for more help.
                 
                 if video_id:
                     added.append((video_id, file_path))
-                    self.has_unsaved_changes = True  # 変更フラグをセット
             
             if added:
                 self.logger.info(f"{len(added)}件のビデオを追加しました")
@@ -957,7 +931,6 @@ Visit our website for more help.
                 for row in sorted(selected_rows, reverse=True):
                     video_id = int(self.table.item(row, 0).text())
                     self.db.delete_video(video_id)
-                    self.has_unsaved_changes = True  # 変更フラグをセット
                 
                 self.logger.info(f"{len(selected_rows)}件のビデオを削除しました")
                 self.refresh_table()
@@ -970,7 +943,6 @@ Visit our website for more help.
         """解析結果を更新"""
         try:
             self.db.add_or_update_analysis_result(video_id, result_json)
-            self.has_unsaved_changes = True  # 変更フラグをセット
             
         except Exception as e:
             self.logger.error(f"解析結果更新中にエラーが発生: {str(e)}", exc_info=True)
@@ -994,6 +966,5 @@ Visit our website for more help.
                 continue
             
             self.db.update_video_prompt(video_id, prompt_name)
-            self.has_unsaved_changes = True  # 変更フラグをセット
             
             self.process_video(video_id, file_path) 
