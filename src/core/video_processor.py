@@ -32,7 +32,7 @@ class VideoProcessor:
         self.logger.info(f"プロンプト設定を変更: {config_name}")
         self.current_prompt_config = config_name
     
-    async def process_video(self, video_path: str, progress_callback: Optional[Callable] = None) -> bool:
+    async def process_video(self, video_path: str, progress_callback: Optional[Callable] = None, status_callback: Optional[Callable] = None) -> bool:
         """動画を非同期で処理"""
         try:
             print(f"動画処理が開始されました - file_path: {video_path}")
@@ -52,18 +52,20 @@ class VideoProcessor:
                 print(f"他の動画の処理完了を待機中... - 待機中の動画ID: {video_id}, 処理中の動画: {current_processing}")
                 # 処理待ち状態に設定
                 self.db.update_video_status(video_id, VideoStatus.PENDING.value)
+                if status_callback:
+                    status_callback(video_id, VideoStatus.PENDING.value)
                 await asyncio.sleep(1)  # 1秒待機
             
             print(f"処理を開始します - video_id: {video_id}")
             self._processing.add(video_id)
             print(f"処理中リストに追加されました - 現在の処理中: {self._processing}")
             self.db.update_video_status(video_id, VideoStatus.PROCESSING.value, 0)
+            if status_callback:
+                status_callback(video_id, VideoStatus.PROCESSING.value)
+            if progress_callback:
+                progress_callback(video_id, 0)
             
             try:
-                # 進捗コールバックの設定
-                if progress_callback:
-                    progress_callback(video_id, 0)
-                
                 # 動画の解析（スレッドプールで実行）
                 loop = asyncio.get_event_loop()
                 result = await loop.run_in_executor(
@@ -74,11 +76,15 @@ class VideoProcessor:
                 # キャンセルされた場合
                 if video_id in self._cancel_requested:
                     self.db.update_video_status(video_id, VideoStatus.CANCELED.value)
+                    if status_callback:
+                        status_callback(video_id, VideoStatus.CANCELED.value)
                     self._cancel_requested.remove(video_id)
                     return False
                 
                 # 進捗更新（50%）
                 self.db.update_video_status(video_id, VideoStatus.PROCESSING.value, 50)
+                if status_callback:
+                    status_callback(video_id, VideoStatus.PROCESSING.value)
                 if progress_callback:
                     progress_callback(video_id, 50)
                 
@@ -102,6 +108,8 @@ class VideoProcessor:
                 
                 # 処理完了
                 self.db.update_video_status(video_id, VideoStatus.FIX.value, 100)
+                if status_callback:
+                    status_callback(video_id, VideoStatus.FIX.value)
                 if progress_callback:
                     progress_callback(video_id, 100)
                 
@@ -111,6 +119,8 @@ class VideoProcessor:
             except Exception as e:
                 self.logger.error(f"動画ID {video_id} の処理中にエラーが発生しました: {str(e)}")
                 self.db.update_video_status(video_id, VideoStatus.ERROR.value)
+                if status_callback:
+                    status_callback(video_id, VideoStatus.ERROR.value)
                 raise
                 
             finally:
@@ -120,22 +130,12 @@ class VideoProcessor:
             self.logger.error(f"動画の処理中にエラーが発生しました: {str(e)}")
             return False
     
-    async def process_multiple_videos(self, video_paths: List[str], progress_callback: Optional[Callable] = None):
-        """複数の動画を並列処理"""
-        tasks = []
-        batch_size = self.config.get_performance_config()["batch_size"]
-        
-        # バッチサイズごとに処理
-        for i in range(0, len(video_paths), batch_size):
-            batch = video_paths[i:i + batch_size]
-            batch_tasks = [
-                self.process_video(path, progress_callback)
-                for path in batch
-            ]
-            tasks.extend(batch_tasks)
-        
-        # 全てのタスクを実行
-        results = await asyncio.gather(*tasks, return_exceptions=True)
+    async def process_multiple_videos(self, video_paths: List[str], progress_callback: Optional[Callable] = None, status_callback: Optional[Callable] = None):
+        """複数の動画を順次処理"""
+        results = []
+        for path in video_paths:
+            result = await self.process_video(path, progress_callback, status_callback)
+            results.append(result)
         return results
     
     def cancel_processing(self, video_id: int):

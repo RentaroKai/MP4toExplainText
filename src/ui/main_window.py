@@ -18,6 +18,7 @@ from src.core.video_processor import VideoProcessor
 from src.core.database import Database
 from src.core.export_manager import ExportManager
 from src.core.prompt_manager import PromptManager
+from src.core.constants import VideoStatus  # VideoStatusをインポート
 from typing import List
 from src_list.ui.main_window import MainWindow as MotionListWindow
 
@@ -94,8 +95,9 @@ class MainWindow(QMainWindow):
         self.update_timer = QTimer(self)
         self.update_timer.timeout.connect(self.refresh_table)
         print("=== タイマー設定 ===")
-        print("更新間隔: 30秒 (1分)")
-        self.update_timer.start(30000)  # 60秒（1分）ごとに更新に変更
+        print("タイマーによる自動更新は無効化されました。代わりにイベント発生時に即時更新されます。")
+        # タイマーによる自動更新は無効化し、必要なときのみ更新するように変更
+        # self.update_timer.start(30000)  # 30秒ごとの更新は無効化
         
         # 初期データの読み込み
         self.load_initial_data()
@@ -399,7 +401,8 @@ class MainWindow(QMainWindow):
         try:
             await self.processor.process_video(
                 file_path,
-                lambda vid, prog: self.signal_emitter.progress_updated.emit(vid, prog)
+                lambda vid, prog: self.signal_emitter.progress_updated.emit(vid, prog),
+                lambda vid, status: self.signal_emitter.status_updated.emit(vid, status)
             )
         except Exception as e:
             self.logger.error(f"動画の処理中にエラーが発生しました: {str(e)}")
@@ -428,76 +431,52 @@ class MainWindow(QMainWindow):
         QMessageBox.critical(self, "エラー", message)
     
     def on_batch_process(self):
-        """選択された項目の一括処理"""
-        try:
-            # デバッグ用：選択状態の確認
-            print("=== 処理開始前の選択状態 ===")
-            initial_selected_items = self.table.selectedItems()
-            print(f"選択されているアイテム数: {len(initial_selected_items)}")
-            for item in initial_selected_items:
-                print(f"選択行: {item.row()}, 列: {item.column()}, テキスト: {item.text()}")
+        """選択された動画を一括処理"""
+        video_ids = self._get_selected_video_ids()
+        if not video_ids:
+            QMessageBox.warning(self, "警告", "処理する動画を選択してください。")
+            return
+        
+        # APIキーが設定されているか確認
+        api_key = self.config.get_api_key()
+        if not api_key:
+            result = QMessageBox.question(
+                self, 
+                "APIキーが必要です",
+                "Gemini APIキーが設定されていません。設定画面を開きますか？",
+                QMessageBox.Yes | QMessageBox.No
+            )
+            if result == QMessageBox.Yes:
+                self.set_api_key()
+            return
             
-            # 選択された行の一意のインデックスを取得
-            selected_rows = set(item.row() for item in initial_selected_items)
-            print(f"一意の選択行数: {len(selected_rows)}")
-            print(f"選択された行: {sorted(list(selected_rows))}")
-            
-            if not selected_rows:
-                self.logger.info("処理する項目が選択されていません")
-                return
-            
-            self.logger.info(f"選択された項目数: {len(selected_rows)}")
-            video_ids = []  # 処理対象のvideo_idリスト
-            
-            for row in selected_rows:
-                try:
-                    video_id = self.table.item(row, 0).data(Qt.UserRole)
-                    if video_id is None:
-                        self.logger.warning(f"行 {row} のvideo_idがNoneです")
-                        continue
-                    
-                    video_info = self.db.get_video_info(video_id)
-                    if video_info is None:
-                        self.logger.warning(f"video_id {video_id} の情報が見つかりません")
-                        continue
-                    
-                    file_path = video_info["file_path"]
-                    video_ids.append((video_id, file_path))
-                    self.logger.info(f"処理キューに追加: video_id={video_id}, file_path={file_path}")
-                    
-                except Exception as e:
-                    self.logger.error(f"行 {row} の処理中にエラーが発生: {str(e)}")
-                    continue
-            
-            # デバッグ用：処理後の選択状態の確認
-            print("\n=== 処理後の選択状態 ===")
-            final_selected_items = self.table.selectedItems()
-            print(f"選択されているアイテム数: {len(final_selected_items)}")
-            for item in final_selected_items:
-                print(f"選択行: {item.row()}, 列: {item.column()}, テキスト: {item.text()}")
-            
-            if not video_ids:
-                self.logger.warning("処理可能な動画が見つかりませんでした")
-                self.show_error("処理可能な動画が選択されていません")
-                return
-            
-            self.logger.info(f"処理を開始する動画数: {len(video_ids)}")
-            
-            # 全ての動画の処理をキューに追加
-            for video_id, file_path in video_ids:
-                try:
-                    asyncio.run_coroutine_threadsafe(
-                        self.process_video(video_id, file_path),
-                        self.loop
-                    )
-                    self.logger.info(f"処理タスクをキューに追加: video_id={video_id}")
-                except Exception as e:
-                    self.logger.error(f"タスク登録中にエラー: video_id={video_id}, error={str(e)}")
-                    self.show_error(f"処理の開始に失敗しました: {str(e)}")
-            
-        except Exception as e:
-            self.logger.error(f"一括処理中に予期せぬエラーが発生: {str(e)}")
-            self.show_error(f"一括処理中にエラーが発生しました: {str(e)}")
+        # 一括処理の確認
+        prompt_name = self.prompt_combo.currentText()  # プロンプトコンボボックスから現在の設定名を取得
+        result = QMessageBox.question(
+            self,
+            "一括処理の確認", 
+            f"選択された {len(video_ids)} 個の動画を処理します。\n"
+            f"現在のプロンプト設定: {prompt_name}\n\n"
+            "続行しますか？",
+            QMessageBox.Yes | QMessageBox.No
+        )
+        
+        if result == QMessageBox.Yes:
+            # 処理対象の動画パスを取得
+            video_paths = []
+            for video_id in video_ids:
+                path = self.db.get_video_info(video_id)["file_path"]
+                video_paths.append(path)
+                
+            # 非同期処理を開始
+            asyncio.run_coroutine_threadsafe(
+                self.processor.process_multiple_videos(
+                    video_paths,
+                    lambda vid, prog: self.signal_emitter.progress_updated.emit(vid, prog),
+                    lambda vid, status: self.signal_emitter.status_updated.emit(vid, status)
+                ),
+                self.loop
+            )
     
     def on_cancel_process(self):
         """選択された項目の処理をキャンセル"""
@@ -512,17 +491,35 @@ class MainWindow(QMainWindow):
     
     def on_reprocess(self, video_id: int, file_path: str):
         """動画の再処理"""
-        print(f"再処理ボタンがクリックされました - video_id: {video_id}, file_path: {file_path}")
-        self.logger.info(f"再処理が開始されました - video_id: {video_id}, file_path: {file_path}")
         try:
+            # APIキーが設定されているか確認
+            api_key = self.config.get_api_key()
+            if not api_key:
+                result = QMessageBox.question(
+                    self, 
+                    "APIキーが必要です",
+                    "Gemini APIキーが設定されていません。設定画面を開きますか？",
+                    QMessageBox.Yes | QMessageBox.No
+                )
+                if result == QMessageBox.Yes:
+                    self.set_api_key()
+                return
+            
+            # 処理中に設定
+            self.set_video_status(video_id, VideoStatus.PENDING.value)
+            
+            # 非同期処理を開始
             asyncio.run_coroutine_threadsafe(
-                self.process_video(video_id, file_path),
+                self.processor.process_video(
+                    file_path, 
+                    lambda vid, prog: self.signal_emitter.progress_updated.emit(vid, prog),
+                    lambda vid, status: self.signal_emitter.status_updated.emit(vid, status)
+                ),
                 self.loop
             )
-            self.logger.info(f"再処理タスクが登録されました - video_id: {video_id}")
         except Exception as e:
-            self.logger.error(f"再処理の開始に失敗しました - video_id: {video_id}, error: {str(e)}")
-            self.show_error(f"再処理の開始に失敗しました: {str(e)}")
+            self.logger.error(f"動画の再処理中にエラーが発生しました: {str(e)}")
+            QMessageBox.critical(self, "エラー", f"動画の再処理に失敗しました: {str(e)}")
     
     def refresh_table(self):
         """テーブルの定期更新"""
