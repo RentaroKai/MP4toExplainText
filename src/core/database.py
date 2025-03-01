@@ -10,18 +10,12 @@ from src.core.constants import VideoStatus
 class Database:
     """
     データベース管理クラス - 複数データベースファイル対応版
-    
-    変更点:
-    - データベースパスを動的に設定可能に変更
-    - 新しいデータベースファイルの初期化機能を追加
-    - アクティブなデータベースの切り替え機能を追加
     """
     
     def __init__(self, db_path: Optional[str] = None):
         self.logger = logging.getLogger(__name__)
         self.config = ConfigManager()
         
-        # データベースパスの設定（指定がなければデフォルトを使用）
         if db_path is None:
             self.db_path = Path(self.config.get_paths()["db_path"])
         else:

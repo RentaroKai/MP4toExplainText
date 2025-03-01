@@ -2,7 +2,6 @@ import os
 import logging
 import asyncio
 import threading
-import time
 from pathlib import Path
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
@@ -194,7 +193,6 @@ class MainWindow(QMainWindow):
                 color: #1e3a5f;
                 font-size: 14px;
                 font-weight: bold;
-                transition: all 0.3s ease;
             }
             QLabel:hover {
                 border-color: #2980b9;
