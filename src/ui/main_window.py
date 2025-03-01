@@ -20,14 +20,12 @@ from src.core.prompt_manager import PromptManager
 from src.core.constants import VideoStatus  # VideoStatusをインポート
 from typing import List
 from src_list.ui.main_window import MainWindow as MotionListWindow
-
 class SignalEmitter(QObject):
     """非同期処理からのシグナルを発行するためのクラス"""
     progress_updated = Signal(int, int)  # video_id, progress
     status_updated = Signal(int, str)    # video_id, status
     error_occurred = Signal(str)         # error_message
     database_changed = Signal()          # データベース変更シグナル（新規追加）
-
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -42,35 +40,27 @@ class MainWindow(QMainWindow):
         self.export_manager = ExportManager(self.config, self.db)
         self.logger.info(f"ExportManagerを初期化しました。DB: {self.db.get_database_path()}")
         
-        # データベースインスタンスを渡してVideoProcessorを初期化
         self.processor = VideoProcessor(self.db)
         self.prompt_manager = PromptManager()
         self.current_filter = ""  # フィルタ文字列を保持
         
-        # 変更フラグの初期化
         self.has_unsaved_changes = False
         
-        # シグナルの接続
         self.signal_emitter.progress_updated.connect(self.update_progress)
         self.signal_emitter.status_updated.connect(self.update_status)
         self.signal_emitter.error_occurred.connect(self.show_error)
         self.signal_emitter.database_changed.connect(self.refresh_after_db_change)
         
-        # ウィンドウタイトルの更新
         self.update_window_title()
         
-        # ウィンドウの設定
         self.setMinimumSize(800, 600)
         
-        # メニューバーの設定
         self.setup_menu_bar()
         
-        # メインウィジェットとレイアウトの設定
         main_widget = QWidget()
         self.setCentralWidget(main_widget)
         layout = QVBoxLayout(main_widget)
         
-        # UIコンポーネントの設定
         self.setup_prompt_selector(layout)
         self.setup_drag_drop_area(layout)
         self.setup_filter_area(layout)  # フィルタエリアを追加
@@ -79,31 +69,15 @@ class MainWindow(QMainWindow):
         self.setup_batch_operations(layout)
         self.setup_export_buttons(layout)
         
-        # ドラッグ＆ドロップを有効化
         self.setAcceptDrops(True)
         
-        # 非同期イベントループの設定
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
         
-        # イベントループを別スレッドで実行
         self.loop_thread = threading.Thread(target=self._run_event_loop, daemon=True)
         self.loop_thread.start()
         
-        # 定期的な更新用タイマー
-        self.update_timer = QTimer(self)
-        self.update_timer.timeout.connect(self.refresh_table)
-        print("=== タイマー設定 ===")
-        print("タイマーによる自動更新は無効化されました。代わりにイベント発生時に即時更新されます。")
-        # タイマーによる自動更新は無効化し、必要なときのみ更新するように変更
-        # self.update_timer.start(30000)  # 30秒ごとの更新は無効化
-        
-        # 初期データの読み込み
         self.load_initial_data()
-        
-        # データベース変更時はウィンドウタイトルを更新（refresh_after_db_changeですでに接続済み）
-        # self.signal_emitter.database_changed.connect(self.update_window_title)
-        # 重複した接続を防止するためにコメントアウト
         
         self.logger.info("メインウィンドウの初期化が完了しました")
     
@@ -131,22 +105,18 @@ class MainWindow(QMainWindow):
         """プロンプト設定選択用のコンボボックスを設定"""
         prompt_layout = QHBoxLayout()
         
-        # ラベル
         label = QLabel("プロンプト設定:")
         prompt_layout.addWidget(label)
         
-        # コンボボックス
         self.prompt_combo = QComboBox()
         self.update_prompt_list()
         self.prompt_combo.currentTextChanged.connect(self.on_prompt_changed)
         prompt_layout.addWidget(self.prompt_combo)
         
-        # 更新ボタン
         refresh_button = QPushButton("更新")
         refresh_button.clicked.connect(self.update_prompt_list)
         prompt_layout.addWidget(refresh_button)
         
-        # 右側に余白を追加
         prompt_layout.addStretch()
         
         layout.addLayout(prompt_layout)
@@ -503,10 +473,8 @@ class MainWindow(QMainWindow):
                     self.set_api_key()
                 return
             
-            # 処理中に設定
             self.set_video_status(video_id, VideoStatus.PENDING.value)
             
-            # 非同期処理を開始
             asyncio.run_coroutine_threadsafe(
                 self.processor.process_video(
                     file_path, 
@@ -524,14 +492,11 @@ class MainWindow(QMainWindow):
         try:
             videos = self.db.get_all_videos()
             
-            # 現在のテーブルの状態を保存
             selected_rows = [item.row() for item in self.table.selectedItems()]
             scroll_position = self.table.verticalScrollBar().value()
             
-            # テーブルをクリア
             self.table.setRowCount(0)
             
-            # フィルタに一致する動画のみを表示
             for video in videos:
                 if self.current_filter in video["file_name"].lower():
                     self.add_video_to_table(
@@ -541,12 +506,10 @@ class MainWindow(QMainWindow):
                         video["progress"]
                     )
             
-            # 選択状態を復元
             for row in selected_rows:
                 if row < self.table.rowCount():
                     self.table.selectRow(row)
             
-            # スクロール位置を復元
             self.table.verticalScrollBar().setValue(scroll_position)
                         
         except Exception as e:
@@ -557,7 +520,6 @@ class MainWindow(QMainWindow):
         try:
             self.logger.info(f"CSVエクスポート開始 - 使用DB: {self.db.get_database_path()}")
             video_ids = self._get_selected_video_ids()
-            # 選択がない場合はNoneを渡して全件出力
             filepath = self.export_manager.export_to_csv(video_ids if video_ids else None)
             self.logger.info(f"CSVエクスポート完了: {filepath}")
             QMessageBox.information(
@@ -618,66 +580,52 @@ class MainWindow(QMainWindow):
     
     def closeEvent(self, event):
         """ウィンドウを閉じる際の処理"""
-        # 未保存の変更がある場合は確認
         if self.has_unsaved_changes and not self.confirm_discard_changes():
             event.ignore()
             return
             
-        # 現在のデータベースパスを保存
         self.config.set_active_database(self.db.get_database_path())
         
-        # イベントループの停止
         if hasattr(self, "loop") and self.loop.is_running():
             self.loop.call_soon_threadsafe(self.loop.stop)
         
-        # 親クラスの処理を呼び出し
         super().closeEvent(event)
 
     def setup_menu_bar(self):
         """メニューバーの設定"""
         menubar = self.menuBar()
         
-        # ファイルメニュー（新規追加）
         file_menu = menubar.addMenu("ファイル")
         
-        # 新規データベース作成
         new_db_action = file_menu.addAction("新規作成")
         new_db_action.triggered.connect(self.create_new_database)
         
-        # データベースを開く
         open_db_action = file_menu.addAction("開く")
         open_db_action.triggered.connect(self.open_database)
         
-        # 最近使用したファイルメニュー
         self.recent_menu = QMenu("最近使用したファイル", self)
         file_menu.addMenu(self.recent_menu)
         self.update_recent_files_menu()
         
         file_menu.addSeparator()
         
-        # データベースを閉じる（デフォルトDBに戻る）
         close_db_action = file_menu.addAction("閉じる")
         close_db_action.triggered.connect(self.close_database)
         
         file_menu.addSeparator()
         
-        # アプリケーション終了
         exit_action = file_menu.addAction("終了")
         exit_action.triggered.connect(self.close)
         
-        # 設定メニュー
         settings_menu = menubar.addMenu("Settings")
         api_key_action = settings_menu.addAction("Set API Key")
         api_key_action.triggered.connect(self.set_api_key)
         
-        # Windowメニュー
         window_menu = menubar.addMenu("Window")
         
-        # モーションリスト管理を開く
         motion_list_action = window_menu.addAction("Open Motion List")
         motion_list_action.triggered.connect(self._open_motion_list)
         
-        # ヘルプメニュー
         help_menu = menubar.addMenu("Help")
         about_action = help_menu.addAction("About")
         about_action.triggered.connect(self.show_about)
@@ -687,14 +635,12 @@ class MainWindow(QMainWindow):
     def set_api_key(self):
         """APIキーを設定するダイアログを表示"""
         current_key = self.config.get_api_key() or ""
-        # マスク表示用の文字列を作成
         masked_key = "X" * len(current_key) if current_key else ""
         
         dialog = QDialog(self)
         dialog.setWindowTitle("Set API Key")
         layout = QVBoxLayout()
         
-        # 説明ラベル
         info_label = QLabel(
             "You can set your API key in two ways:\n"
             "1. Set environment variable 'GOOGLE_API_KEY' (recommended)\n"
@@ -703,13 +649,11 @@ class MainWindow(QMainWindow):
         )
         layout.addWidget(info_label)
         
-        # 入力フィールド
         input_field = QLineEdit(dialog)
         input_field.setPlaceholderText("Enter your API key here")
         input_field.setText(masked_key)
         layout.addWidget(input_field)
         
-        # ボタンボックス
         button_box = QDialogButtonBox(
             QDialogButtonBox.Ok | QDialogButtonBox.Cancel
         )
@@ -864,17 +808,13 @@ Visit our website for more help.
         try:
             self.logger.debug(f"新しいデータベースを作成します: {file_path}")
             
-            # 新しいデータベースを作成
             if self.db.create_new_database(file_path):
                 self.logger.debug(f"データベース作成成功: {file_path}")
                 
-                # 最近使用したファイルメニューを更新（先に実行）
                 self.update_recent_files_menu()
                 
-                # 設定を更新
                 self.config.set_active_database(file_path)
                 
-                # UI更新
                 self.signal_emitter.database_changed.emit()
                 self.logger.info(f"新しいデータベースを作成しました: {file_path}")
             else:
@@ -886,11 +826,9 @@ Visit our website for more help.
     
     def open_database(self):
         """既存のデータベースファイルを開く"""
-        # 未保存の変更がある場合は確認
         if self.has_unsaved_changes and not self.confirm_discard_changes():
             return
             
-        # ファイル選択ダイアログ
         file_path, _ = QFileDialog.getOpenFileName(
             self, 
             "データベースを開く", 
@@ -912,13 +850,10 @@ Visit our website for more help.
             if self.db.change_database(file_path):
                 self.logger.debug(f"データベース変更成功: {file_path}")
                 
-                # 最近使用したファイルメニューを更新（先に実行）
                 self.update_recent_files_menu()
                 
-                # 設定を更新
                 self.config.set_active_database(file_path)
                 
-                # UI更新
                 self.signal_emitter.database_changed.emit()
                 self.logger.info(f"データベースを開きました: {file_path}")
             else:
@@ -930,26 +865,20 @@ Visit our website for more help.
     
     def close_database(self):
         """現在のデータベースを閉じてデフォルトのデータベースに戻る"""
-        # 未保存の変更がある場合は確認
         if self.has_unsaved_changes and not self.confirm_discard_changes():
             return
             
         try:
-            # デフォルトのDBパスを取得
             default_db_path = self.config.get_paths()["db_path"]
             self.logger.debug(f"デフォルトデータベースに戻ります: {default_db_path}")
             
-            # データベースを変更
             if self.db.change_database(default_db_path):
                 self.logger.debug(f"データベース変更成功（デフォルトに戻りました）")
                 
-                # 最近使用したファイルメニューを更新（先に実行）
                 self.update_recent_files_menu()
                 
-                # 設定を更新
                 self.config.set_active_database(default_db_path)
                 
-                # UI更新
                 self.signal_emitter.database_changed.emit()
                 self.logger.info("デフォルトデータベースに戻りました")
             else:
@@ -992,19 +921,16 @@ Visit our website for more help.
                     
                 file_name = os.path.basename(file_path)
                 
-                # データベースに追加
                 video_id = self.db.add_video(file_path, file_name)
                 
                 if video_id:
                     added.append((video_id, file_path))
                     self.has_unsaved_changes = True  # 変更フラグをセット
             
-            # 追加結果の表示
             if added:
                 self.logger.info(f"{len(added)}件のビデオを追加しました")
                 self.refresh_table()
                 
-                # 自動処理が有効ならば処理を開始
                 if self.auto_process.isChecked():
                     for video_id, file_path in added:
                         self.process_video(video_id, file_path)
@@ -1023,7 +949,6 @@ Visit our website for more help.
             QMessageBox.information(self, "情報", "削除するビデオを選択してください。")
             return
         
-        # 削除確認
         msg = "選択されたビデオを削除しますか？"
         reply = QMessageBox.question(self, '確認', msg, QMessageBox.Yes, QMessageBox.No)
         
@@ -1058,22 +983,17 @@ Visit our website for more help.
             QMessageBox.information(self, "情報", "処理するビデオを選択してください。")
             return
         
-        # プロンプト設定の取得
         prompt_name = self.prompt_combo.currentText()
         
-        # 処理開始
         for row in selected_rows:
             video_id = int(self.table.item(row, 0).text())
             file_path = self.table.item(row, 1).text()
             
-            # ステータスが処理中の場合はスキップ
             status = self.table.item(row, 3).text()
             if status == VideoStatus.PROCESSING:
                 continue
             
-            # プロンプト名をDBに保存（追加機能）
             self.db.update_video_prompt(video_id, prompt_name)
             self.has_unsaved_changes = True  # 変更フラグをセット
             
-            # 処理開始
             self.process_video(video_id, file_path) 
