@@ -2,8 +2,10 @@ import os
 import time
 import logging
 import httplib2
+import json
+import re
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, Union, List, Any
 import google.generativeai as genai
 from google.ai.generativelanguage_v1beta.types import content
 from src.core.config_manager import ConfigManager
@@ -11,7 +13,7 @@ from src.core.prompt_manager import PromptManager
 import certifi
 
 class GeminiAPI:
-    """Gemini APIを使用して動画解析を行うクラス"""
+    """Gemini APIを使用して動画解析を行うクラス - 改善版：柔軟なレスポンス処理"""
 
     def __init__(self):
         self.logger = logging.getLogger(__name__)
@@ -179,8 +181,53 @@ class GeminiAPI:
             self.logger.error(f"ファイル処理の待機中にエラーが発生しました: {str(e)}")
             raise
 
+    def _parse_response(self, response_text: str) -> Dict[str, Any]:
+        """AIからの応答テキストをパースして辞書に変換する
+        
+        複数のフォーマットに対応する柔軟なパース処理
+        """
+        try:
+            # まずJSON.parseを試みる
+            try:
+                return json.loads(response_text)
+            except json.JSONDecodeError:
+                self.logger.warning("標準JSONパースに失敗しました。代替パース処理を試みます。")
+            
+            # Python evalを試みる
+            try:
+                # evalは危険な可能性があるので、単純な辞書のみを想定
+                if re.match(r"^\s*\{.*\}\s*$", response_text, re.DOTALL):
+                    result = eval(response_text)
+                    if isinstance(result, dict):
+                        return result
+            except Exception as e:
+                self.logger.warning(f"Pythonスタイルの辞書評価に失敗しました: {str(e)}")
+            
+            # 正規表現ベースの抽出を試みる
+            result = {}
+            
+            # キーと値のペアを抽出する正規表現
+            pattern = r'["\']?([^"\']+)["\']?\s*:\s*["\']?([^"\'{}][^",\'{}]*)["\']?[,}]'
+            matches = re.findall(pattern, response_text)
+            for key, value in matches:
+                key = key.strip()
+                value = value.strip()
+                result[key] = value
+            
+            if result:
+                self.logger.info("正規表現ベースの抽出で部分的な結果を得ました")
+                return result
+            
+            # 全て失敗した場合は、テキスト全体を1つのフィールドとして扱う
+            self.logger.warning("構造化パースに失敗しました。テキスト全体を1つのフィールドとして扱います")
+            return {"raw_text": response_text}
+        
+        except Exception as e:
+            self.logger.error(f"レスポンスパース中に予期せぬエラーが発生: {str(e)}")
+            return {"error": str(e), "raw_text": response_text}
+
     def analyze_video(self, video_path: str, config_name: str = "default") -> Dict:
-        """動画を解析して結果を返す"""
+        """動画を解析して結果を返す - 改善版：より柔軟なレスポンス処理"""
         try:
             # プロンプト設定の読み込み
             self.prompt_manager.load_config(config_name)
@@ -200,8 +247,20 @@ class GeminiAPI:
             chat = self.model.start_chat()
             response = chat.send_message([video_file, prompt])
 
-            # レスポンスの解析
-            result = eval(response.text)  # JSON文字列を辞書に変換
+            # レスポンスの解析（柔軟なパース処理）
+            result = self._parse_response(response.text)
+            
+            # ログに記録（デバッグ用）
+            self.logger.info(f"AIレスポンスのパース結果: {result}")
+            
+            # 必須フィールドの確認
+            required_fields = ["Name of AnimationFile", "Overall Movement Description", 
+                               "Appropriate Scene", "Posture Detail"]
+            missing_fields = [field for field in required_fields if field not in result]
+            
+            if missing_fields:
+                self.logger.warning(f"AIの応答に不足しているフィールドがあります: {missing_fields}")
+            
             self.logger.info(f"動画の解析が完了しました: {video_path}")
             return result
 
@@ -209,24 +268,48 @@ class GeminiAPI:
             self.logger.error(f"動画の解析中にエラーが発生しました: {str(e)}")
             raise
 
-    def extract_tags(self, analysis_result: Dict) -> list:
-        """解析結果からタグを抽出"""
+    def extract_tags(self, analysis_result: Dict) -> List[str]:
+        """解析結果からタグを抽出 - 改善版：より柔軟な抽出処理"""
         tags = []
 
+        # 様々なキー名に対応
+        scene_keys = ["Appropriate Scene", "scene", "Scene", "appropriate_scene"]
+        tempo_keys = ["Tempo Speed", "tempo", "Speed", "tempo_speed"]
+        intensity_keys = ["Intensity Force", "intensity", "Force", "intensity_force"]
+        loopable_keys = ["Loopable", "loopable", "can_loop", "IsLoopable"]
+        
         # シーンタグ
-        if scene := analysis_result.get("Appropriate Scene"):
-            tags.append(f"scene:{scene}")
-
+        for key in scene_keys:
+            if key in analysis_result and analysis_result[key]:
+                tags.append(f"scene:{analysis_result[key]}")
+                break
+        
         # テンポタグ
-        if tempo := analysis_result.get("Tempo Speed"):
-            tags.append(f"tempo:{tempo}")
-
+        for key in tempo_keys:
+            if key in analysis_result and analysis_result[key]:
+                tags.append(f"tempo:{analysis_result[key]}")
+                break
+        
         # 強度タグ
-        if intensity := analysis_result.get("Intensity Force"):
-            tags.append(f"intensity:{intensity}")
-
+        for key in intensity_keys:
+            if key in analysis_result and analysis_result[key]:
+                tags.append(f"intensity:{analysis_result[key]}")
+                break
+        
         # ループ可能タグ
-        if loopable := analysis_result.get("Loopable"):
-            tags.append(f"loopable:{loopable}")
-
+        for key in loopable_keys:
+            if key in analysis_result and analysis_result[key]:
+                tags.append(f"loopable:{analysis_result[key]}")
+                break
+        
+        # キャラクター特性タグ
+        if "character_gender" in analysis_result and analysis_result["character_gender"]:
+            tags.append(f"gender:{analysis_result['character_gender']}")
+        
+        if "character_age_group" in analysis_result and analysis_result["character_age_group"]:
+            tags.append(f"age:{analysis_result['character_age_group']}")
+        
+        if "character_body_type" in analysis_result and analysis_result["character_body_type"]:
+            tags.append(f"body:{analysis_result['character_body_type']}")
+        
         return tags

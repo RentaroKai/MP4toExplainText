@@ -3,6 +3,9 @@ from PySide6.QtCore import Qt, Signal
 from typing import List, Dict, Any
 from ..models.table_item import TableItem
 from datetime import datetime
+import logging
+
+logger = logging.getLogger(__name__)
 
 class CustomTableWidget(QTableWidget):
     tag_edited = Signal(int, list)  # video_id, new_tags
