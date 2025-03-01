@@ -709,7 +709,7 @@ Visit our website for more help.
     def _open_motion_list(self):
         """モーションリスト管理ウィンドウを開く"""
         try:
-            db_path = self.config.get_paths().get("db_path")
+            db_path = self.config.get_active_database()
             if db_path and Path(db_path).exists():
                 self.motion_list_window = MotionListWindow(db_path=db_path)
                 self.motion_list_window.show()
@@ -717,7 +717,7 @@ Visit our website for more help.
                 QMessageBox.warning(
                     self,
                     "警告",
-                    "データベースファイルが見つかりません。\nモーションリスト管理ウィンドウで手動で選択してください。"
+                    f"アクティブなデータベースファイル '{db_path}' が見つかりません。\nモーションリスト管理ウィンドウで手動で選択してください。"
                 )
                 self.motion_list_window = MotionListWindow()
                 self.motion_list_window.show()
@@ -726,7 +726,7 @@ Visit our website for more help.
                 self,
                 "エラー",
                 f"モーションリスト管理ウィンドウの起動に失敗しました: {str(e)}"
-            ) 
+            )
 
     def update_window_title(self):
         """ウィンドウタイトルを更新（現在のデータベースファイル名を表示）"""
