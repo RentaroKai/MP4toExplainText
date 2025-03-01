@@ -43,3 +43,5 @@ GIT.jpg
 docs/prompt_externalization_spec.md
 src/core/old_gemini_api.py
 run_migrate.bat
+data/config/config.json
+data/config/paths.json

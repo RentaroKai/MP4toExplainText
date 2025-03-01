@@ -11,38 +11,26 @@ def setup_logger():
     paths = config.get_paths()
     
     # ログディレクトリの作成
-    log_dir = Path(paths["log_dir"])
+    log_dir = Path(paths["log_path"])
     log_dir.mkdir(parents=True, exist_ok=True)
     
     # ログファイル名の設定（日付ごと）
     log_file = log_dir / f"motion_tag_{datetime.now().strftime('%Y%m%d')}.log"
     
     # ロガーの基本設定
-    logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
-    
-    # フォーマッターの作成
-    formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    logging.basicConfig(
+        level=logging.DEBUG,  # DEBUGレベルに変更
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.StreamHandler(),  # コンソール出力
+            RotatingFileHandler(
+                log_file, 
+                maxBytes=10*1024*1024,  # 10MB
+                backupCount=5
+            )
+        ]
     )
     
-    # ファイルハンドラーの設定
-    file_handler = RotatingFileHandler(
-        log_file,
-        maxBytes=10*1024*1024,  # 10MB
-        backupCount=5,
-        encoding='utf-8'
-    )
-    file_handler.setLevel(logging.INFO)
-    file_handler.setFormatter(formatter)
-    
-    # コンソールハンドラーの設定
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.INFO)
-    console_handler.setFormatter(formatter)
-    
-    # ハンドラーの追加
-    logger.addHandler(file_handler)
-    logger.addHandler(console_handler)
-    
-    logger.info("ロガーの初期化が完了しました") 
+    # ルートロガーを取得
+    root_logger = logging.getLogger()
+    root_logger.info("ロガーの初期化が完了しました") 

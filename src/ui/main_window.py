@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
     QComboBox
 )
 from PySide6.QtCore import Qt, QMimeData, Signal, QObject, QTimer
-from PySide6.QtGui import QDragEnterEvent, QDropEvent
+from PySide6.QtGui import QDragEnterEvent, QDropEvent, QAction
 from src.core.config_manager import ConfigManager
 from src.core.video_processor import VideoProcessor
 from src.core.database import Database
@@ -26,26 +26,40 @@ class SignalEmitter(QObject):
     progress_updated = Signal(int, int)  # video_id, progress
     status_updated = Signal(int, str)    # video_id, status
     error_occurred = Signal(str)         # error_message
+    database_changed = Signal()          # データベース変更シグナル（新規追加）
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.logger = logging.getLogger(__name__)
         self.config = ConfigManager()
-        self.db = Database()
-        self.processor = VideoProcessor()
+        
+        # データの初期化
         self.signal_emitter = SignalEmitter()
+        self.db = Database(self.config.get_active_database())
+        self.logger.info(f"データベースを初期化しました: {self.db.get_database_path()}")
+        
         self.export_manager = ExportManager(self.config, self.db)
+        self.logger.info(f"ExportManagerを初期化しました。DB: {self.db.get_database_path()}")
+        
+        # データベースインスタンスを渡してVideoProcessorを初期化
+        self.processor = VideoProcessor(self.db)
         self.prompt_manager = PromptManager()
         self.current_filter = ""  # フィルタ文字列を保持
+        
+        # 変更フラグの初期化
+        self.has_unsaved_changes = False
         
         # シグナルの接続
         self.signal_emitter.progress_updated.connect(self.update_progress)
         self.signal_emitter.status_updated.connect(self.update_status)
         self.signal_emitter.error_occurred.connect(self.show_error)
+        self.signal_emitter.database_changed.connect(self.refresh_after_db_change)
+        
+        # ウィンドウタイトルの更新
+        self.update_window_title()
         
         # ウィンドウの設定
-        self.setWindowTitle("MotionTag - Video Tool")
         self.setMinimumSize(800, 600)
         
         # メニューバーの設定
@@ -85,6 +99,10 @@ class MainWindow(QMainWindow):
         
         # 初期データの読み込み
         self.load_initial_data()
+        
+        # データベース変更時はウィンドウタイトルを更新（refresh_after_db_changeですでに接続済み）
+        # self.signal_emitter.database_changed.connect(self.update_window_title)
+        # 重複した接続を防止するためにコメントアウト
         
         self.logger.info("メインウィンドウの初期化が完了しました")
     
@@ -542,9 +560,11 @@ class MainWindow(QMainWindow):
     def export_to_csv(self):
         """選択された項目をCSVにエクスポート"""
         try:
+            self.logger.info(f"CSVエクスポート開始 - 使用DB: {self.db.get_database_path()}")
             video_ids = self._get_selected_video_ids()
             # 選択がない場合はNoneを渡して全件出力
             filepath = self.export_manager.export_to_csv(video_ids if video_ids else None)
+            self.logger.info(f"CSVエクスポート完了: {filepath}")
             QMessageBox.information(
                 self,
                 "エクスポート完了",
@@ -602,15 +622,53 @@ class MainWindow(QMainWindow):
         return video_ids
     
     def closeEvent(self, event):
-        """ウィンドウが閉じられる時の処理"""
-        self.update_timer.stop()
-        if self.loop.is_running():
+        """ウィンドウを閉じる際の処理"""
+        # 未保存の変更がある場合は確認
+        if self.has_unsaved_changes and not self.confirm_discard_changes():
+            event.ignore()
+            return
+            
+        # 現在のデータベースパスを保存
+        self.config.set_active_database(self.db.get_database_path())
+        
+        # イベントループの停止
+        if hasattr(self, "loop") and self.loop.is_running():
             self.loop.call_soon_threadsafe(self.loop.stop)
-        event.accept()
+        
+        # 親クラスの処理を呼び出し
+        super().closeEvent(event)
 
     def setup_menu_bar(self):
         """メニューバーの設定"""
         menubar = self.menuBar()
+        
+        # ファイルメニュー（新規追加）
+        file_menu = menubar.addMenu("ファイル")
+        
+        # 新規データベース作成
+        new_db_action = file_menu.addAction("新規作成")
+        new_db_action.triggered.connect(self.create_new_database)
+        
+        # データベースを開く
+        open_db_action = file_menu.addAction("開く")
+        open_db_action.triggered.connect(self.open_database)
+        
+        # 最近使用したファイルメニュー
+        self.recent_menu = QMenu("最近使用したファイル", self)
+        file_menu.addMenu(self.recent_menu)
+        self.update_recent_files_menu()
+        
+        file_menu.addSeparator()
+        
+        # データベースを閉じる（デフォルトDBに戻る）
+        close_db_action = file_menu.addAction("閉じる")
+        close_db_action.triggered.connect(self.close_database)
+        
+        file_menu.addSeparator()
+        
+        # アプリケーション終了
+        exit_action = file_menu.addAction("終了")
+        exit_action.triggered.connect(self.close)
         
         # 設定メニュー
         settings_menu = menubar.addMenu("Settings")
@@ -736,3 +794,291 @@ Visit our website for more help.
                 "エラー",
                 f"モーションリスト管理ウィンドウの起動に失敗しました: {str(e)}"
             ) 
+
+    def update_window_title(self):
+        """ウィンドウタイトルを更新（現在のデータベースファイル名を表示）"""
+        db_path = self.db.get_database_path()
+        db_filename = os.path.basename(db_path)
+        self.setWindowTitle(f"MotionTag - Video Tool [{db_filename}]")
+    
+    def refresh_after_db_change(self):
+        """データベース変更後の画面更新"""
+        self.logger.info(f"データベース変更が検出されました。現在のDB: {self.db.get_database_path()}")
+        
+        # ExportManagerのデータベース参照を更新
+        self.export_manager = ExportManager(self.config, self.db)
+        self.logger.info("ExportManagerのデータベース参照を更新しました")
+        
+        # VideoProcessorのデータベース参照を更新
+        # 注意: VideoProcessorは内部でデータベースを生成するため、新しいインスタンスを作成
+        old_processor = self.processor
+        self.processor = VideoProcessor(self.db)
+        # 現在のプロンプト設定を引き継ぐ
+        self.processor.set_prompt_config(old_processor.current_prompt_config)
+        self.logger.info("VideoProcessorのインスタンスを更新しました")
+        
+        # 画面を更新
+        self.refresh_table()
+        self.update_window_title()
+        self.logger.info("データベース変更後の画面更新が完了しました")
+        self.has_unsaved_changes = False  # 変更フラグをリセット
+    
+    def update_recent_files_menu(self):
+        """最近使用したファイルメニューを更新"""
+        # 設定を再読み込みして最新の状態を取得
+        config_data = self.config._load_json(self.config.config_file)
+        self.logger.debug(f"設定ファイルの内容確認: {config_data}")
+        
+        # 最近使用したファイルのリストを取得
+        recent_files = config_data.get("recent_databases", [])
+        self.logger.debug(f"最近使用したファイルメニュー更新: 取得したファイル数={len(recent_files)}, ファイル={recent_files}")
+        
+        # メニューをクリア
+        self.recent_menu.clear()
+        
+        # 最近使用したファイルがない場合
+        if not recent_files:
+            no_recent = QAction("最近使用したファイルはありません", self)
+            no_recent.setEnabled(False)
+            self.recent_menu.addAction(no_recent)
+            return
+        
+        # 最近使用したファイルをメニューに追加
+        for file_path in recent_files:
+            action = QAction(file_path, self)
+            action.triggered.connect(lambda checked, path=file_path: self.open_database_from_path(path))
+            self.recent_menu.addAction(action)
+    
+    def create_new_database(self):
+        """新しいデータベースファイルを作成"""
+        # 未保存の変更がある場合は確認
+        if self.has_unsaved_changes and not self.confirm_discard_changes():
+            return
+            
+        # ファイル選択ダイアログ
+        file_path, _ = QFileDialog.getSaveFileName(
+            self, 
+            "新規データベースの作成", 
+            str(Path.home()), 
+            "SQLiteデータベース (*.db)"
+        )
+        
+        if not file_path:  # キャンセルされた場合
+            return
+            
+        try:
+            self.logger.debug(f"新しいデータベースを作成します: {file_path}")
+            
+            # 新しいデータベースを作成
+            if self.db.create_new_database(file_path):
+                self.logger.debug(f"データベース作成成功: {file_path}")
+                
+                # 最近使用したファイルメニューを更新（先に実行）
+                self.update_recent_files_menu()
+                
+                # 設定を更新
+                self.config.set_active_database(file_path)
+                
+                # UI更新
+                self.signal_emitter.database_changed.emit()
+                self.logger.info(f"新しいデータベースを作成しました: {file_path}")
+            else:
+                QMessageBox.critical(self, "エラー", "データベースの作成に失敗しました。")
+                
+        except Exception as e:
+            QMessageBox.critical(self, "エラー", f"データベースの作成中にエラーが発生しました: {str(e)}")
+            self.logger.error(f"データベース作成中にエラーが発生: {str(e)}", exc_info=True)
+    
+    def open_database(self):
+        """既存のデータベースファイルを開く"""
+        # 未保存の変更がある場合は確認
+        if self.has_unsaved_changes and not self.confirm_discard_changes():
+            return
+            
+        # ファイル選択ダイアログ
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, 
+            "データベースを開く", 
+            str(Path.home()), 
+            "SQLiteデータベース (*.db)"
+        )
+        
+        if not file_path:  # キャンセルされた場合
+            return
+            
+        self.open_database_from_path(file_path)
+    
+    def open_database_from_path(self, file_path):
+        """指定されたパスのデータベースを開く"""
+        try:
+            self.logger.debug(f"データベースを開こうとしています: {file_path}")
+            
+            # データベースを変更
+            if self.db.change_database(file_path):
+                self.logger.debug(f"データベース変更成功: {file_path}")
+                
+                # 最近使用したファイルメニューを更新（先に実行）
+                self.update_recent_files_menu()
+                
+                # 設定を更新
+                self.config.set_active_database(file_path)
+                
+                # UI更新
+                self.signal_emitter.database_changed.emit()
+                self.logger.info(f"データベースを開きました: {file_path}")
+            else:
+                QMessageBox.critical(self, "エラー", "データベースを開けませんでした。")
+                
+        except Exception as e:
+            QMessageBox.critical(self, "エラー", f"データベースを開く際にエラーが発生しました: {str(e)}")
+            self.logger.error(f"データベースを開く際にエラーが発生: {str(e)}", exc_info=True)
+    
+    def close_database(self):
+        """現在のデータベースを閉じてデフォルトのデータベースに戻る"""
+        # 未保存の変更がある場合は確認
+        if self.has_unsaved_changes and not self.confirm_discard_changes():
+            return
+            
+        try:
+            # デフォルトのDBパスを取得
+            default_db_path = self.config.get_paths()["db_path"]
+            self.logger.debug(f"デフォルトデータベースに戻ります: {default_db_path}")
+            
+            # データベースを変更
+            if self.db.change_database(default_db_path):
+                self.logger.debug(f"データベース変更成功（デフォルトに戻りました）")
+                
+                # 最近使用したファイルメニューを更新（先に実行）
+                self.update_recent_files_menu()
+                
+                # 設定を更新
+                self.config.set_active_database(default_db_path)
+                
+                # UI更新
+                self.signal_emitter.database_changed.emit()
+                self.logger.info("デフォルトデータベースに戻りました")
+            else:
+                QMessageBox.critical(self, "エラー", "デフォルトデータベースに戻れませんでした。")
+                
+        except Exception as e:
+            QMessageBox.critical(self, "エラー", f"データベースを閉じる際にエラーが発生しました: {str(e)}")
+            self.logger.error(f"データベースを閉じる際にエラーが発生: {str(e)}", exc_info=True)
+    
+    def confirm_discard_changes(self):
+        """未保存の変更を破棄するか確認"""
+        reply = QMessageBox.question(
+            self, 
+            "確認", 
+            "保存されていない変更があります。変更を破棄してもよろしいですか？",
+            QMessageBox.Yes | QMessageBox.No, 
+            QMessageBox.No
+        )
+        return reply == QMessageBox.Yes
+
+    def set_video_status(self, video_id, status):
+        """ビデオのステータスを設定"""
+        try:
+            self.db.update_video_status(video_id, status)
+            self.has_unsaved_changes = True  # 変更フラグをセット
+            self.refresh_table()
+        except Exception as e:
+            self.logger.error(f"ビデオステータス更新中にエラーが発生: {str(e)}", exc_info=True)
+            self.show_error(f"ステータス更新中にエラーが発生しました: {str(e)}")
+    
+    def add_video_files(self, file_paths):
+        """ビデオファイルをデータベースに追加"""
+        try:
+            added = []
+            
+            for file_path in file_paths:
+                if not os.path.exists(file_path):
+                    self.logger.warning(f"ファイルが存在しません: {file_path}")
+                    continue
+                    
+                file_name = os.path.basename(file_path)
+                
+                # データベースに追加
+                video_id = self.db.add_video(file_path, file_name)
+                
+                if video_id:
+                    added.append((video_id, file_path))
+                    self.has_unsaved_changes = True  # 変更フラグをセット
+            
+            # 追加結果の表示
+            if added:
+                self.logger.info(f"{len(added)}件のビデオを追加しました")
+                self.refresh_table()
+                
+                # 自動処理が有効ならば処理を開始
+                if self.auto_process.isChecked():
+                    for video_id, file_path in added:
+                        self.process_video(video_id, file_path)
+            
+            return len(added)
+            
+        except Exception as e:
+            self.logger.error(f"ビデオ追加中にエラーが発生: {str(e)}", exc_info=True)
+            self.show_error(f"ビデオ追加中にエラーが発生しました: {str(e)}")
+            return 0
+    
+    def delete_selected_videos(self):
+        """選択されたビデオを削除"""
+        selected_rows = self.get_selected_rows()
+        if not selected_rows:
+            QMessageBox.information(self, "情報", "削除するビデオを選択してください。")
+            return
+        
+        # 削除確認
+        msg = "選択されたビデオを削除しますか？"
+        reply = QMessageBox.question(self, '確認', msg, QMessageBox.Yes, QMessageBox.No)
+        
+        if reply == QMessageBox.Yes:
+            try:
+                for row in sorted(selected_rows, reverse=True):
+                    video_id = int(self.table.item(row, 0).text())
+                    self.db.delete_video(video_id)
+                    self.has_unsaved_changes = True  # 変更フラグをセット
+                
+                self.logger.info(f"{len(selected_rows)}件のビデオを削除しました")
+                self.refresh_table()
+                
+            except Exception as e:
+                self.logger.error(f"ビデオ削除中にエラーが発生: {str(e)}", exc_info=True)
+                self.show_error(f"ビデオ削除中にエラーが発生しました: {str(e)}")
+    
+    def update_analysis_result(self, video_id, result_json):
+        """解析結果を更新"""
+        try:
+            self.db.add_or_update_analysis_result(video_id, result_json)
+            self.has_unsaved_changes = True  # 変更フラグをセット
+            
+        except Exception as e:
+            self.logger.error(f"解析結果更新中にエラーが発生: {str(e)}", exc_info=True)
+            self.show_error(f"解析結果の更新中にエラーが発生しました: {str(e)}")
+    
+    def process_selected_videos(self):
+        """選択されたビデオの処理を開始"""
+        selected_rows = self.get_selected_rows()
+        if not selected_rows:
+            QMessageBox.information(self, "情報", "処理するビデオを選択してください。")
+            return
+        
+        # プロンプト設定の取得
+        prompt_name = self.prompt_combo.currentText()
+        
+        # 処理開始
+        for row in selected_rows:
+            video_id = int(self.table.item(row, 0).text())
+            file_path = self.table.item(row, 1).text()
+            
+            # ステータスが処理中の場合はスキップ
+            status = self.table.item(row, 3).text()
+            if status == VideoStatus.PROCESSING:
+                continue
+            
+            # プロンプト名をDBに保存（追加機能）
+            self.db.update_video_prompt(video_id, prompt_name)
+            self.has_unsaved_changes = True  # 変更フラグをセット
+            
+            # 処理開始
+            self.process_video(video_id, file_path) 

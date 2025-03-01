@@ -1,22 +1,80 @@
 import json
 import os
+import logging
 from pathlib import Path
+from typing import Dict, Any
 
 class ConfigManager:
-    """アプリケーションの設定を管理するクラス"""
+    """
+    アプリケーションの設定を管理するクラス
+    
+    変更点:
+    - 設定更新メソッドの追加（update_config）
+    - 最近使用したデータベースの管理機能
+    - アクティブなデータベースパスの記憶機能
+    """
     
     def __init__(self):
-        self.config_dir = Path("config")
-        self.paths_file = self.config_dir / "paths.json"
+        """初期化"""
+        self.logger = logging.getLogger(__name__)
+        
+        # 基本ディレクトリ構造を設定
+        self.base_dir = Path.home() / "MP4toExplainText"
+        self.data_dir = Path(__file__).parent.parent.parent / "data"
+        self.config_dir = self.data_dir / "config"
+        
+        # 設定ファイルのパス
         self.config_file = self.config_dir / "config.json"
         
         # 設定ディレクトリが存在しない場合は作成
-        if not self.config_dir.exists():
-            self.config_dir.mkdir(parents=True)
+        self.config_dir.mkdir(parents=True, exist_ok=True)
         
-        # 設定の読み込み
-        self._paths = self._load_json(self.paths_file)
+        # 設定ファイルが存在しない場合はデフォルト設定を作成
+        if not self.config_file.exists():
+            default_config = {
+                "active_database": str(self.data_dir / "db" / "abab.db"),
+                "recent_databases": [],
+                "ui": {
+                    "theme": "light",
+                    "font_size": 12
+                },
+                "performance": {
+                    "batch_size": 5
+                },
+                "cleanup": {
+                    "auto_delete_temp": True
+                },
+                "api": {
+                    "use_default_cert": True
+                }
+            }
+            self._save_json(self.config_file, default_config)
+        
+        # 設定を読み込み
         self._config = self._load_json(self.config_file)
+        
+        self.paths_file = self.config_dir / "paths.json"
+        
+        # パス設定ファイルが存在しない場合はデフォルト設定を作成
+        if not self.paths_file.exists():
+            default_paths = {
+                "db_path": str(self.data_dir / "db" / "abab.db"),
+                "export_path": str(self.data_dir / "exports"),
+                "temp_path": str(self.data_dir / "temp"),
+                "log_dir": str(self.data_dir / "logs")
+            }
+            self._save_json(self.paths_file, default_paths)
+        
+        # パス設定を読み込み
+        self._paths = self._load_json(self.paths_file)
+        
+        # 設定が空の場合はデフォルト値を設定
+        if not self._config:
+            self._config = {
+                "recent_databases": [],
+                "active_database": None
+            }
+            self._save_json(self.config_file, self._config)
     
     def _load_json(self, file_path: Path) -> dict:
         """JSONファイルを読み込む"""
@@ -32,9 +90,12 @@ class ConfigManager:
     def _save_json(self, file_path: Path, data: dict):
         """JSONファイルを保存する"""
         try:
+            self.logger.debug(f"JSONファイル保存開始: {file_path}")
             with open(file_path, 'w', encoding='utf-8') as f:
                 json.dump(data, f, ensure_ascii=False, indent=4)
+            self.logger.debug(f"JSONファイル保存完了")
         except Exception as e:
+            self.logger.error(f"JSONファイル保存エラー: {file_path} - {str(e)}")
             raise Exception(f"設定ファイルの保存に失敗しました: {file_path} - {str(e)}")
     
     def get_paths(self) -> dict:
@@ -48,6 +109,55 @@ class ConfigManager:
     def get_api_config(self) -> dict:
         """API関連の設定を取得"""
         return self._config.get("api", {})
+    
+    def update_config(self, new_config: dict):
+        """
+        アプリケーション設定を更新
+        
+        Args:
+            new_config: 新しい設定データ
+        """
+        self.logger.debug(f"設定更新開始: {new_config}")
+        self._config = new_config
+        try:
+            self._save_json(self.config_file, self._config)
+            self.logger.debug(f"設定ファイルを保存しました: {self.config_file}")
+        except Exception as e:
+            self.logger.error(f"設定更新中にエラーが発生しました: {str(e)}", exc_info=True)
+    
+    def get_recent_databases(self) -> list:
+        """最近使用したデータベースのリストを取得"""
+        recent_dbs = self._config.get("recent_databases", [])
+        self.logger.debug(f"get_recent_databases: {recent_dbs}")
+        return recent_dbs
+    
+    def set_active_database(self, db_path: str):
+        """
+        現在アクティブなデータベースを設定
+        
+        Args:
+            db_path: データベースファイルのパス
+        """
+        self.logger.debug(f"アクティブデータベース設定: {db_path}")
+        # 現在の設定を再読み込みして最新の状態を取得
+        self._config = self._load_json(self.config_file)
+        # active_databaseのみを更新
+        self._config["active_database"] = db_path
+        # 更新した設定を保存
+        self._save_json(self.config_file, self._config)
+        self.logger.debug(f"アクティブデータベース設定完了、最近使用したDBリスト: {self._config.get('recent_databases', [])}")
+    
+    def get_active_database(self) -> str:
+        """
+        現在アクティブなデータベースのパスを取得
+        
+        Returns:
+            str: データベースファイルのパス、設定されていない場合はデフォルトのパス
+        """
+        active_db = self._config.get("active_database")
+        if active_db:
+            return active_db
+        return self._paths.get("db_path")
     
     def get_ui_config(self) -> dict:
         """UI関連の設定を取得"""

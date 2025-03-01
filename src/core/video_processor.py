@@ -11,10 +11,14 @@ from src.core.constants import VideoStatus
 class VideoProcessor:
     """動画処理を管理するクラス"""
     
-    def __init__(self):
+    def __init__(self, database=None):
         self.logger = logging.getLogger(__name__)
         self.config = ConfigManager()
-        self.db = Database()
+        # 外部からデータベースインスタンスを受け取れるように修正
+        if database is None:
+            self.db = Database()
+        else:
+            self.db = database
         self.gemini = GeminiAPI()
         self.executor = ThreadPoolExecutor(
             max_workers=1  # 同時処理数を1に制限

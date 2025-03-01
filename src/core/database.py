@@ -8,21 +8,35 @@ from src.core.config_manager import ConfigManager
 from src.core.constants import VideoStatus
 
 class Database:
-    """データベース管理クラス - 改善版：より一貫したデータモデル管理を実装"""
+    """
+    データベース管理クラス - 複数データベースファイル対応版
     
-    def __init__(self):
+    変更点:
+    - データベースパスを動的に設定可能に変更
+    - 新しいデータベースファイルの初期化機能を追加
+    - アクティブなデータベースの切り替え機能を追加
+    """
+    
+    def __init__(self, db_path: Optional[str] = None):
         self.logger = logging.getLogger(__name__)
         self.config = ConfigManager()
-        self.db_path = Path(self.config.get_paths()["db_path"])
+        
+        # データベースパスの設定（指定がなければデフォルトを使用）
+        if db_path is None:
+            self.db_path = Path(self.config.get_paths()["db_path"])
+        else:
+            self.db_path = Path(db_path)
         
         # データベースディレクトリの作成
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         
         # データベースの初期化
         self._init_database()
+        
+        self.logger.info(f"データベースを初期化しました: {self.db_path}")
     
     def _init_database(self):
-        """データベースの初期化とテーブルの作成 - 改善版：フィールドの整合性向上"""
+        """データベースの初期化とテーブルの作成 - 複数DB対応版"""
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
@@ -80,14 +94,107 @@ class Database:
                 """)
                 
                 conn.commit()
-                self.logger.info("データベースの初期化が完了しました")
+                self.logger.debug(f"データベーステーブルを初期化しました: {self.db_path}")
                 
         except Exception as e:
             self.logger.error(f"データベースの初期化中にエラーが発生しました: {str(e)}")
             raise
     
-    def _get_connection(self) -> sqlite3.Connection:
-        """データベース接続を取得"""
+    def change_database(self, new_db_path: str) -> bool:
+        """
+        使用するデータベースファイルを変更する
+        
+        Args:
+            new_db_path: 新しいデータベースファイルのパス
+            
+        Returns:
+            bool: 成功した場合はTrue、失敗した場合はFalse
+        """
+        try:
+            # 現在のパスと同じ場合は何もしない
+            if Path(new_db_path) == self.db_path:
+                return True
+                
+            self.db_path = Path(new_db_path)
+            self.db_path.parent.mkdir(parents=True, exist_ok=True)
+            
+            # 新しいデータベースが存在しなければ初期化する
+            if not self.db_path.exists() or self.db_path.stat().st_size == 0:
+                self._init_database()
+            
+            # 最近使用したDBリストを更新
+            self._update_recent_db_list(str(self.db_path))
+            
+            self.logger.info(f"データベースを変更しました: {self.db_path}")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"データベース変更中にエラーが発生しました: {str(e)}")
+            return False
+    
+    def _update_recent_db_list(self, db_path: str):
+        """最近使用したデータベースリストを更新する"""
+        try:
+            self.logger.debug(f"_update_recent_db_list メソッドが呼び出されました。パス: {db_path}")
+            
+            # 設定ファイルから直接最新の設定を読み込む
+            config_data = self.config._load_json(self.config.config_file)
+            self.logger.debug(f"取得した設定データ: {config_data}")
+            
+            recent_dbs = config_data.get("recent_databases", [])
+            self.logger.debug(f"更新前の最近使用したDBリスト: {recent_dbs}")
+            
+            # 既に同じパスが存在する場合は削除（後で先頭に追加するため）
+            if db_path in recent_dbs:
+                recent_dbs.remove(db_path)
+                self.logger.debug(f"既存のパスを削除しました: {db_path}")
+            
+            # リストの先頭に追加
+            recent_dbs.insert(0, db_path)
+            self.logger.debug(f"リストの先頭に追加しました: {db_path}")
+            
+            # リストを最大10件に制限
+            recent_dbs = recent_dbs[:10]
+            
+            # 設定を更新
+            config_data["recent_databases"] = recent_dbs
+            self.logger.debug(f"更新する設定データ: {config_data}")
+            
+            self.config.update_config(config_data)
+            self.logger.debug(f"設定を更新しました。更新後のリスト: {recent_dbs}")
+            
+            # 更新後の設定を再確認
+            updated_config = self.config._load_json(self.config.config_file)
+            self.logger.debug(f"更新後の設定データを再確認: {updated_config}")
+            
+        except Exception as e:
+            self.logger.warning(f"最近使用したDBリストの更新に失敗しました: {str(e)}")
+            self.logger.debug(f"エラーの詳細: ", exc_info=True)
+    
+    def create_new_database(self, db_path: str) -> bool:
+        """
+        新しいデータベースファイルを作成する
+        
+        Args:
+            db_path: 新しいデータベースファイルのパス
+            
+        Returns:
+            bool: 成功した場合はTrue、失敗した場合はFalse
+        """
+        try:
+            # 現在のパスから変更して新しいDBを初期化
+            return self.change_database(db_path)
+            
+        except Exception as e:
+            self.logger.error(f"新しいデータベース作成中にエラーが発生しました: {str(e)}")
+            return False
+    
+    def get_database_path(self) -> str:
+        """現在のデータベースファイルのパスを取得する"""
+        return str(self.db_path)
+    
+    def _get_connection(self):
+        """SQLite3データベース接続を取得 - パス動的変更対応版"""
         return sqlite3.connect(self.db_path)
     
     def add_video(self, file_path: str) -> int:
@@ -278,16 +385,33 @@ class Database:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
                 
-                cursor.execute("""
-                SELECT id, file_path, file_name, status, progress, 
-                       created_at, updated_at
-                FROM videos
-                WHERE id = ?
-                """, (video_id,))
+                # prompt_name列の存在確認
+                has_prompt_column = True
+                try:
+                    cursor.execute("SELECT prompt_name FROM videos LIMIT 1")
+                except sqlite3.OperationalError:
+                    has_prompt_column = False
+                    self.logger.debug("videosテーブルにprompt_name列が存在しません")
+                
+                # prompt_name列を含めてクエリを実行
+                if has_prompt_column:
+                    cursor.execute("""
+                    SELECT id, file_path, file_name, status, progress, 
+                           created_at, updated_at, prompt_name
+                    FROM videos
+                    WHERE id = ?
+                    """, (video_id,))
+                else:
+                    cursor.execute("""
+                    SELECT id, file_path, file_name, status, progress, 
+                           created_at, updated_at
+                    FROM videos
+                    WHERE id = ?
+                    """, (video_id,))
                 
                 row = cursor.fetchone()
                 if row:
-                    return {
+                    result = {
                         "id": row[0],
                         "file_path": row[1],
                         "file_name": row[2],
@@ -296,6 +420,13 @@ class Database:
                         "created_at": row[5],
                         "updated_at": row[6]
                     }
+                    
+                    # prompt_name列が存在する場合は追加
+                    if has_prompt_column:
+                        result["prompt_name"] = row[7] if row[7] is not None else ""
+                        
+                    return result
+                    
                 return None
                 
         except Exception as e:
@@ -308,32 +439,74 @@ class Database:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
                 
+                # prompt_name列の存在確認
+                has_prompt_column = True
+                try:
+                    cursor.execute("SELECT prompt_name FROM videos LIMIT 1")
+                except sqlite3.OperationalError:
+                    has_prompt_column = False
+                    self.logger.debug("videosテーブルにprompt_name列が存在しません")
+                
+                # オフセットとリミットの計算
                 offset = (page - 1) * per_page
-                cursor.execute("""
-                SELECT v.id, v.file_path, v.file_name, v.status, v.progress,
-                       v.created_at, v.updated_at,
-                       GROUP_CONCAT(t.tag) as tags
-                FROM videos v
-                LEFT JOIN tags t ON v.id = t.video_id
-                GROUP BY v.id
-                ORDER BY v.created_at DESC
-                LIMIT ? OFFSET ?
-                """, (per_page, offset))
+                
+                # タグを含めたクエリの実行（LEFT JOINとGROUP BY使用）
+                if has_prompt_column:
+                    cursor.execute("""
+                    SELECT v.id, v.file_path, v.file_name, v.status, v.progress, 
+                           v.created_at, v.updated_at, v.prompt_name,
+                           GROUP_CONCAT(t.tag) as tags
+                    FROM videos v
+                    LEFT JOIN tags t ON v.id = t.video_id
+                    GROUP BY v.id
+                    ORDER BY v.id DESC
+                    LIMIT ? OFFSET ?
+                    """, (per_page, offset))
+                else:
+                    cursor.execute("""
+                    SELECT v.id, v.file_path, v.file_name, v.status, v.progress, 
+                           v.created_at, v.updated_at,
+                           GROUP_CONCAT(t.tag) as tags
+                    FROM videos v
+                    LEFT JOIN tags t ON v.id = t.video_id
+                    GROUP BY v.id
+                    ORDER BY v.id DESC
+                    LIMIT ? OFFSET ?
+                    """, (per_page, offset))
                 
                 rows = cursor.fetchall()
-                return [{
-                    "id": row[0],
-                    "file_path": row[1],
-                    "file_name": row[2],
-                    "status": row[3],
-                    "progress": row[4],
-                    "created_at": row[5],
-                    "updated_at": row[6],
-                    "tags": row[7].split(",") if row[7] else []
-                } for row in rows]
+                videos = []
+                
+                for row in rows:
+                    # 基本的な動画情報
+                    video = {
+                        "id": row[0],
+                        "file_path": row[1],
+                        "file_name": row[2],
+                        "status": row[3],
+                        "progress": row[4],
+                        "created_at": row[5],
+                        "updated_at": row[6]
+                    }
+                    
+                    # prompt_name列が存在する場合
+                    if has_prompt_column:
+                        video["prompt_name"] = row[7] if row[7] is not None else ""
+                        # タグはインデックス8
+                        tags = row[8]
+                    else:
+                        # タグはインデックス7
+                        tags = row[7]
+                    
+                    # タグを配列に変換
+                    video["tags"] = tags.split(",") if tags else []
+                    
+                    videos.append(video)
+                
+                return videos
                 
         except Exception as e:
-            self.logger.error(f"動画一覧の取得中にエラーが発生しました: {str(e)}")
+            self.logger.error(f"全ての動画情報の取得中にエラーが発生しました: {str(e)}")
             raise
     
     def get_latest_analysis_result(self, video_id: int) -> Dict:
@@ -381,4 +554,45 @@ class Database:
                 
         except Exception as e:
             self.logger.error(f"解析結果の取得中にエラーが発生しました: {str(e)}")
-            raise 
+            raise
+
+    def update_video_prompt(self, video_id: int, prompt_name: str) -> bool:
+        """
+        ビデオに使用するプロンプト名を更新
+        
+        Args:
+            video_id: 対象ビデオのID
+            prompt_name: プロンプト名
+            
+        Returns:
+            bool: 成功した場合はTrue、失敗した場合はFalse
+        """
+        try:
+            with self._get_connection() as conn:
+                cursor = conn.cursor()
+                
+                # プロンプト情報の列が存在しない場合は追加
+                try:
+                    cursor.execute("SELECT prompt_name FROM videos LIMIT 1")
+                except sqlite3.OperationalError:
+                    cursor.execute("ALTER TABLE videos ADD COLUMN prompt_name TEXT")
+                    self.logger.info("videosテーブルにprompt_name列を追加しました")
+                
+                # プロンプト名を更新
+                cursor.execute(
+                    "UPDATE videos SET prompt_name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                    (prompt_name, video_id)
+                )
+                
+                conn.commit()
+                
+                if cursor.rowcount > 0:
+                    self.logger.debug(f"ビデオID {video_id} のプロンプト設定を更新しました: {prompt_name}")
+                    return True
+                else:
+                    self.logger.warning(f"ビデオID {video_id} が見つかりません")
+                    return False
+                    
+        except Exception as e:
+            self.logger.error(f"プロンプト設定の更新中にエラーが発生しました: {str(e)}")
+            return False 
