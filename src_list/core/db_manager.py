@@ -46,6 +46,9 @@ class DatabaseManager:
                     json_extract(ar.result_json, '$.character_body_type') as character_body_type,
                     json_extract(ar.result_json, '$.Name of AnimationFile') as animation_file_name,
                     ar.result_json,
+                    ar.param_01,
+                    ar.param_02,
+                    ar.param_03,
                     GROUP_CONCAT(t.tag) as tags
                 FROM videos v
                 LEFT JOIN analysis_results ar ON v.id = ar.video_id
@@ -65,6 +68,9 @@ class DatabaseManager:
                 print(f"年齢: {row_dict.get('character_age_group')}")
                 print(f"体型: {row_dict.get('character_body_type')}")
                 print(f"アニメーションファイル名: {row_dict.get('animation_file_name')}")
+                print(f"カスタムパラメータ1: {row_dict.get('param_01')}")
+                print(f"カスタムパラメータ2: {row_dict.get('param_02')}")
+                print(f"カスタムパラメータ3: {row_dict.get('param_03')}")
                 result.append(row_dict)
             
             print("=== データベース取得終了 ===")

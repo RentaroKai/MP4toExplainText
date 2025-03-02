@@ -98,6 +98,9 @@ class ExportManager:
                 "tempo",
                 "motion_intensity",
                 "posture_details",
+                "custom_param1",
+                "custom_param2",
+                "custom_param3",
                 "status",
                 "created_at",
                 "updated_at",
@@ -117,7 +120,10 @@ class ExportManager:
                 "Loopable": "can_loop",
                 "Tempo Speed": "tempo",
                 "Intensity Force": "motion_intensity",
-                "Posture Detail": "posture_details"
+                "Posture Detail": "posture_details",
+                "param_01": "custom_param1",
+                "param_02": "custom_param2",
+                "param_03": "custom_param3"
             }
             
             self.logger.info(f"CSVエクスポート開始: {len(video_ids)}件のビデオを処理")
@@ -142,6 +148,7 @@ class ExportManager:
                             row = [
                                 video_info["file_name"],
                                 "", "", "", "", "", "", "", "", "", "", "", "",
+                                "", "", "",  # カスタムパラメータ用に3列追加
                                 video_info["status"],
                                 video_info["created_at"],
                                 video_info["updated_at"],
@@ -176,6 +183,9 @@ class ExportManager:
                                 field_values["tempo"],
                                 field_values["motion_intensity"],
                                 field_values["posture_details"],
+                                field_values["custom_param1"],
+                                field_values["custom_param2"],
+                                field_values["custom_param3"],
                                 video_info["status"],
                                 video_info["created_at"],
                                 video_info["updated_at"],
@@ -189,6 +199,7 @@ class ExportManager:
                             row = [
                                 video_info["file_name"],
                                 "", "", "", "", "", "", "", "", "", "", "", "",
+                                "", "", "",  # カスタムパラメータ用に3列追加
                                 video_info["status"],
                                 video_info["created_at"],
                                 video_info["updated_at"],

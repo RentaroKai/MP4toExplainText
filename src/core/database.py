@@ -70,6 +70,11 @@ class Database:
                     intensity_force TEXT DEFAULT NULL,
                     posture_detail TEXT DEFAULT NULL,
                     
+                    -- カスタムパラメータを追加
+                    param_01 TEXT DEFAULT NULL,
+                    param_02 TEXT DEFAULT NULL,
+                    param_03 TEXT DEFAULT NULL,
+                    
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (video_id) REFERENCES videos (id)
                 )
@@ -276,7 +281,10 @@ class Database:
                         "loopable": None,
                         "tempo_speed": None,
                         "intensity_force": None,
-                        "posture_detail": None
+                        "posture_detail": None,
+                        "param_01": None,
+                        "param_02": None,
+                        "param_03": None
                     }
             
             # 各フィールドの抽出（柔軟な命名規則に対応）
@@ -292,7 +300,10 @@ class Database:
                 "loopable": ["Loopable", "loopable", "can_loop", "IsLoopable"],
                 "tempo_speed": ["Tempo Speed", "tempo_speed", "Tempo", "Speed"],
                 "intensity_force": ["Intensity Force", "intensity_force", "Intensity", "Force"],
-                "posture_detail": ["Posture Detail", "posture_detail", "Posture", "PostureDetails"]
+                "posture_detail": ["Posture Detail", "posture_detail", "Posture", "PostureDetails"],
+                "param_01": ["param_01", "custom_param1", "CustomParam1", "param01"],
+                "param_02": ["param_02", "custom_param2", "CustomParam2", "param02"],
+                "param_03": ["param_03", "custom_param3", "CustomParam3", "param03"]
             }
             
             extracted_fields = {}
@@ -334,9 +345,10 @@ class Database:
                     video_id, result_json, version, 
                     animation_name, character_gender, character_age_group, character_body_type,
                     movement_description, initial_pose, final_pose, appropriate_scene,
-                    loopable, tempo_speed, intensity_force, posture_detail
+                    loopable, tempo_speed, intensity_force, posture_detail,
+                    param_01, param_02, param_03
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
                     video_id, result_str, version,
                     fields["animation_name"], fields["character_gender"], 
@@ -344,7 +356,8 @@ class Database:
                     fields["movement_description"], fields["initial_pose"], 
                     fields["final_pose"], fields["appropriate_scene"],
                     fields["loopable"], fields["tempo_speed"], 
-                    fields["intensity_force"], fields["posture_detail"]
+                    fields["intensity_force"], fields["posture_detail"],
+                    fields["param_01"], fields["param_02"], fields["param_03"]
                 ))
                 
                 conn.commit()
@@ -512,7 +525,8 @@ class Database:
                 SELECT id, video_id, result_json, version, created_at,
                        animation_name, character_gender, character_age_group, character_body_type,
                        movement_description, initial_pose, final_pose, appropriate_scene,
-                       loopable, tempo_speed, intensity_force, posture_detail
+                       loopable, tempo_speed, intensity_force, posture_detail,
+                       param_01, param_02, param_03
                 FROM analysis_results
                 WHERE video_id = ?
                 ORDER BY created_at DESC
@@ -541,7 +555,10 @@ class Database:
                             "loopable": result[13],
                             "tempo_speed": result[14],
                             "intensity_force": result[15],
-                            "posture_detail": result[16]
+                            "posture_detail": result[16],
+                            "param_01": result[17],
+                            "param_02": result[18],
+                            "param_03": result[19]
                         }
                     }
                 return None

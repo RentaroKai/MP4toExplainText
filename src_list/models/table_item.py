@@ -24,6 +24,9 @@ class TableItem:
     tempo: Optional[str] = None
     loopable: Optional[str] = None
     animation_file_name: Optional[str] = None
+    param_01: Optional[str] = None
+    param_02: Optional[str] = None
+    param_03: Optional[str] = None
     tags: List[str] = None
 
     @classmethod
@@ -89,6 +92,8 @@ class TableItem:
 
         logger.info(f"解析後のResult JSON: {result_json}")
         logger.info(f"キャラクター情報: gender={data.get('character_gender')}, age={data.get('character_age_group')}, body={data.get('character_body_type')}")
+        logger.info(f"カスタムパラメータ: param_01={data.get('param_01')}, param_02={data.get('param_02')}, param_03={data.get('param_03')}")
+        logger.info(f"JSONからのカスタムパラメータ: param_01={result_json.get('param_01')}, param_02={result_json.get('param_02')}, param_03={result_json.get('param_03')}")
 
         try:
             instance = cls(
@@ -108,6 +113,9 @@ class TableItem:
                 tempo=result_json.get('Tempo Speed', ''),
                 loopable=result_json.get('Loopable', ''),
                 animation_file_name=result_json.get('Name of AnimationFile', ''),
+                param_01=data.get('param_01') or result_json.get('param_01', ''),
+                param_02=data.get('param_02') or result_json.get('param_02', ''),
+                param_03=data.get('param_03') or result_json.get('param_03', ''),
                 tags=tags
             )
             logger.info(f"生成されたインスタンス: {instance}")
@@ -139,6 +147,9 @@ class TableItem:
                 'tempo': self.tempo,
                 'loopable': self.loopable,
                 'animation_file_name': self.animation_file_name,
+                'param_01': self.param_01,
+                'param_02': self.param_02,
+                'param_03': self.param_03,
                 'tags': ','.join(self.tags) if self.tags else ''
             }
         except Exception as e:

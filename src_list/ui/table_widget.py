@@ -27,6 +27,7 @@ class CustomTableWidget(QTableWidget):
             "動作概要", "姿勢詳細",
             "開始姿勢", "終了姿勢",
             "アニメーションファイル名",
+            "カスタム1", "カスタム2", "カスタム3",  # 新しいカラム
             "その他タグ"
         ]
         self.setColumnCount(len(columns))
@@ -41,7 +42,9 @@ class CustomTableWidget(QTableWidget):
         for i in range(9, 13):  # 動作概要から終了姿勢まで
             header.setSectionResizeMode(i, QHeaderView.Interactive)  # ユーザーが幅を調整可能
         header.setSectionResizeMode(13, QHeaderView.ResizeToContents)  # アニメーションファイル名
-        header.setSectionResizeMode(14, QHeaderView.Stretch)  # その他タグ
+        for i in range(14, 17):  # カスタムパラメータ1〜3
+            header.setSectionResizeMode(i, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(17, QHeaderView.Stretch)  # その他タグ
         
         # その他の設定
         self.setSelectionBehavior(QTableWidget.SelectRows)
@@ -107,7 +110,10 @@ class CustomTableWidget(QTableWidget):
                 self.setItem(row, 11, self._create_item(item.initial_pose or ''))
                 self.setItem(row, 12, self._create_item(item.final_pose or ''))
                 self.setItem(row, 13, self._create_item(item.animation_file_name or ''))
-                self.setItem(row, 14, self._create_item(', '.join(other_tags)))
+                self.setItem(row, 14, self._create_item(item.param_01 or '', True))
+                self.setItem(row, 15, self._create_item(item.param_02 or '', True))
+                self.setItem(row, 16, self._create_item(item.param_03 or '', True))
+                self.setItem(row, 17, self._create_item(', '.join(other_tags)))
         finally:
             current_time = datetime.now().strftime('%H:%M:%S.%f')[:-3]
             print(f"=== テーブル更新完了 [{current_time}] ===")

@@ -112,6 +112,15 @@ class GeminiAPI:
                     "Posture Detail": content.Schema(
                         type=content.Type.STRING,
                     ),
+                    "param_01": content.Schema(
+                        type=content.Type.STRING,
+                    ),
+                    "param_02": content.Schema(
+                        type=content.Type.STRING,
+                    ),
+                    "param_03": content.Schema(
+                        type=content.Type.STRING,
+                    ),
                 },
             ),
             "response_mime_type": "application/json",
@@ -136,6 +145,9 @@ class GeminiAPI:
             - Tempo Speed
             - Intensity Force
             - Posture Detail
+            - param_01 (HandyItem)
+            - param_02 (CommunicationParam: e.g., Neutral, Agree, Deny, etc.)
+            - param_03 (Emotion: e.g., Neutral, Happy, Sad, Angry, etc.)
             """
         )
 
@@ -251,7 +263,13 @@ class GeminiAPI:
             result = self._parse_response(response.text)
             
             # ログに記録（デバッグ用）
+            self.logger.info(f"AIレスポンスの生テキスト: {response.text}")
             self.logger.info(f"AIレスポンスのパース結果: {result}")
+            
+            # カスタムパラメータの確認 - 詳細ログ追加
+            self.logger.info(f"カスタムパラメータ - param_01: {result.get('param_01')}")
+            self.logger.info(f"カスタムパラメータ - param_02: {result.get('param_02')}")
+            self.logger.info(f"カスタムパラメータ - param_03: {result.get('param_03')}")
             
             # 必須フィールドの確認
             required_fields = ["Name of AnimationFile", "Overall Movement Description", 

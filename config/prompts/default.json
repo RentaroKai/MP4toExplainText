@@ -65,6 +65,21 @@
       "description": "Detailed description of posture (16-100 characters)",
       "type": "string",
       "required": true
+   },
+    "param_01": {
+      "description": "HandyItem",
+      "type": "string",
+      "required": false
+    },
+    "param_02": {
+      "description": "CominucationParam(e.g., Neutral, Agree, Deny,  etc.)",
+      "type": "string",
+      "required": false
+    },
+    "param_03": {
+      "description": "Emotion(e.g., Neutral, Happy, Sad, Angry, etc.)",
+      "type": "string",
+      "required": false
     }
   }
 } 

@@ -62,9 +62,24 @@
       "options": ["強い", "ふつう", "弱い"]
     },
     "Posture Detail": {
-      "description": "姿勢の厳密な説明",
+      "description": "Detailed description of posture (16-100 characters)",
       "type": "string",
       "required": true
+    },
+    "param_01": {
+      "description": "カスタムパラメータ1",
+      "type": "string",
+      "required": false
+    },
+    "param_02": {
+      "description": "カスタムパラメータ2",
+      "type": "string",
+      "required": false
+    },
+    "param_03": {
+      "description": "カスタムパラメータ3",
+      "type": "string",
+      "required": false
     }
   }
 } 
