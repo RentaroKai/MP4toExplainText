@@ -67,17 +67,17 @@
       "required": true
     },
     "param_01": {
-      "description": "カスタムパラメータ1",
+      "description": "手に持っているもの(例: ボール, バット, なし)",
       "type": "string",
       "required": false
     },
     "param_02": {
-      "description": "カスタムパラメータ2",
+      "description": "動きによって伝えたいこと(例: 同意,否定,悲しい、なし)",
       "type": "string",
       "required": false
     },
     "param_03": {
-      "description": "カスタムパラメータ3",
+      "description": "立ち・座り・しゃがみ・ねころびのどれ？（例: 立ち, 座り, しゃがみ, ねころび）",
       "type": "string",
       "required": false
     }
