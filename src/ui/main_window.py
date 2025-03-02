@@ -93,7 +93,8 @@ class MainWindow(QMainWindow):
                     video["file_path"],
                     video["id"],
                     video["status"],
-                    video["progress"]
+                    video["progress"],
+                    video["tags"]  # タグ情報を追加
                 )
         except Exception as e:
             self.logger.error(f"初期データの読み込み中にエラーが発生しました: {str(e)}")
@@ -318,7 +319,7 @@ class MainWindow(QMainWindow):
             # データベースに追加
             try:
                 video_id = self.db.add_video(file)
-                self.add_video_to_table(file, video_id, "UNPROCESSED", 0)
+                self.add_video_to_table(file, video_id, "UNPROCESSED", 0, [])  # 空のタグリストを追加
                 
                 # 自動処理が有効な場合は処理を開始
                 if self.auto_process.isChecked():
@@ -331,7 +332,7 @@ class MainWindow(QMainWindow):
                 self.logger.error(f"ファイルの追加中にエラーが発生しました: {str(e)}")
                 self.show_error(f"ファイルの追加に失敗しました: {file}")
     
-    def add_video_to_table(self, file_path: str, video_id: int, status: str, progress: int):
+    def add_video_to_table(self, file_path: str, video_id: int, status: str, progress: int, tags: list = None):
         """テーブルに新しいファイルを追加"""
         row = self.table.rowCount()
         self.table.insertRow(row)
@@ -354,8 +355,9 @@ class MainWindow(QMainWindow):
         progress_bar.setValue(progress)
         self.table.setCellWidget(row, 3, progress_bar)
         
-        # タグ（空）
-        self.table.setItem(row, 4, QTableWidgetItem(""))
+        # タグの表示
+        tag_text = ", ".join(tags) if tags else ""
+        self.table.setItem(row, 4, QTableWidgetItem(tag_text))
         
         # 再処理ボタン
         reprocess_button = QPushButton("▶Run")
@@ -501,7 +503,8 @@ class MainWindow(QMainWindow):
                         video["file_path"],
                         video["id"],
                         video["status"],
-                        video["progress"]
+                        video["progress"],
+                        video["tags"]  # タグ情報を追加
                     )
             
             for row in selected_rows:
