@@ -61,7 +61,7 @@ class ConfigManager:
                 "db_path": str(self.data_dir / "db" / "abab.db"),
                 "export_path": str(self.data_dir / "exports"),
                 "temp_path": str(self.data_dir / "temp"),
-                "log_dir": str(self.data_dir / "logs")
+                "log_path": str(self.data_dir / "logs")
             }
             self._save_json(self.paths_file, default_paths)
         
