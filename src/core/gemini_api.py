@@ -127,7 +127,7 @@ class GeminiAPI:
         }
 
         self.model = genai.GenerativeModel(
-            model_name="gemini-2.0-flash",
+            model_name="gemini-2.5-pro-exp-03-25",
             generation_config=generation_config,
             system_instruction="""
             Analyze the actions of people in the video and return the results in JSON format.
