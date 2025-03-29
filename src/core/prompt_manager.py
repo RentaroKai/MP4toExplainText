@@ -85,8 +85,13 @@ class PromptManager:
             self.logger.error("設定が読み込まれていません")
             return ""
         
+        # ファイル名を抽出
+        video_file = Path(video_path)
+        file_name = video_file.name  # 拡張子付きファイル名
+        file_stem = video_file.stem  # 拡張子なしファイル名
+        
         # プロンプトのベース部分
-        prompt = "この動画の動作を解析して、以下の情報を含むJSONで返してください：\n"
+        prompt = f"この動画（ファイル名: {file_stem}）の動作を解析して、以下の情報を含むJSONで返してください：\n"
         
         # 各フィールドの説明を追加
         for field_name, field_config in config["fields"].items():
