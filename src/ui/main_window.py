@@ -104,7 +104,7 @@ class MainWindow(QMainWindow):
         """プロンプト設定選択用のコンボボックスを設定"""
         prompt_layout = QHBoxLayout()
         
-        label = QLabel("プロンプト設定:")
+        label = QLabel("Prompt Settings:")
         prompt_layout.addWidget(label)
         
         self.prompt_combo = QComboBox()
@@ -112,7 +112,7 @@ class MainWindow(QMainWindow):
         self.prompt_combo.currentTextChanged.connect(self.on_prompt_changed)
         prompt_layout.addWidget(self.prompt_combo)
         
-        refresh_button = QPushButton("更新")
+        refresh_button = QPushButton("Refresh")
         refresh_button.clicked.connect(self.update_prompt_list)
         prompt_layout.addWidget(refresh_button)
         
@@ -272,7 +272,7 @@ class MainWindow(QMainWindow):
         
         open_csv_folder_btn = QPushButton("📁CSV")
         open_csv_folder_btn.clicked.connect(lambda: self.open_folder("csv"))
-        open_csv_folder_btn.setToolTip("CSVフォルダを開く")
+        open_csv_folder_btn.setToolTip("Open CSV Folder")
         csv_layout.addWidget(open_csv_folder_btn)
         export_layout.addLayout(csv_layout)
         
@@ -284,7 +284,7 @@ class MainWindow(QMainWindow):
         
         open_json_folder_btn = QPushButton("📁JSON")
         open_json_folder_btn.clicked.connect(lambda: self.open_folder("json"))
-        open_json_folder_btn.setToolTip("JSONフォルダを開く")
+        open_json_folder_btn.setToolTip("Open JSON Folder")
         json_layout.addWidget(open_json_folder_btn)
         export_layout.addLayout(json_layout)
         
@@ -343,7 +343,7 @@ class MainWindow(QMainWindow):
         
         # 動画を開くボタン
         open_button = QPushButton("🎬")
-        open_button.setToolTip("動画を開く")
+        open_button.setToolTip("Open Video")
         open_button.clicked.connect(lambda: os.startfile(file_path))
         self.table.setCellWidget(row, 1, open_button)
         
@@ -396,13 +396,13 @@ class MainWindow(QMainWindow):
     
     def show_error(self, message: str):
         """エラーメッセージの表示"""
-        QMessageBox.critical(self, "エラー", message)
+        QMessageBox.critical(self, "Error", message)
     
     def on_batch_process(self):
         """選択された動画を一括処理"""
         video_ids = self._get_selected_video_ids()
         if not video_ids:
-            QMessageBox.warning(self, "警告", "処理する動画を選択してください。")
+            QMessageBox.warning(self, "Warning", "Please select videos to process.")
             return
         
         # APIキーが設定されているか確認
@@ -410,8 +410,8 @@ class MainWindow(QMainWindow):
         if not api_key:
             result = QMessageBox.question(
                 self, 
-                "APIキーが必要です",
-                "Gemini APIキーが設定されていません。設定画面を開きますか？",
+                "API Key Required",
+                "Gemini API key is not set. Open the settings screen?",
                 QMessageBox.Yes | QMessageBox.No
             )
             if result == QMessageBox.Yes:
@@ -422,10 +422,10 @@ class MainWindow(QMainWindow):
         prompt_name = self.prompt_combo.currentText()  # プロンプトコンボボックスから現在の設定名を取得
         result = QMessageBox.question(
             self,
-            "一括処理の確認", 
-            f"選択された {len(video_ids)} 個の動画を処理します。\n"
-            f"現在のプロンプト設定: {prompt_name}\n\n"
-            "続行しますか？",
+            "Batch Processing Confirmation", 
+            f"Process selected {len(video_ids)} videos.\n"
+            f"Current prompt setting: {prompt_name}\n\n"
+            "Continue?",
             QMessageBox.Yes | QMessageBox.No
         )
         
@@ -465,8 +465,8 @@ class MainWindow(QMainWindow):
             if not api_key:
                 result = QMessageBox.question(
                     self, 
-                    "APIキーが必要です",
-                    "Gemini APIキーが設定されていません。設定画面を開きますか？",
+                    "API Key Required",
+                    "Gemini API key is not set. Open the settings screen?",
                     QMessageBox.Yes | QMessageBox.No
                 )
                 if result == QMessageBox.Yes:
@@ -485,7 +485,7 @@ class MainWindow(QMainWindow):
             )
         except Exception as e:
             self.logger.error(f"動画の再処理中にエラーが発生しました: {str(e)}")
-            QMessageBox.critical(self, "エラー", f"動画の再処理に失敗しました: {str(e)}")
+            QMessageBox.critical(self, "Error", f"動画の再処理に失敗しました: {str(e)}")
     
     def refresh_table(self):
         """テーブルの定期更新"""
@@ -525,15 +525,15 @@ class MainWindow(QMainWindow):
             self.logger.info(f"CSVエクスポート完了: {filepath}")
             QMessageBox.information(
                 self,
-                "エクスポート完了",
-                f"CSVファイルを作成しました:\n{filepath}"
+                "Information",
+                f"CSV file created:\n{filepath}"
             )
             
         except Exception as e:
             self.logger.error(f"CSVエクスポート中にエラーが発生しました: {str(e)}")
             QMessageBox.critical(
                 self,
-                "エラー",
+                "Error",
                 f"エクスポート中にエラーが発生しました:\n{str(e)}"
             )
     
@@ -545,15 +545,15 @@ class MainWindow(QMainWindow):
             filepath = self.export_manager.export_to_json(video_ids if video_ids else None)
             QMessageBox.information(
                 self,
-                "エクスポート完了",
-                f"JSONファイルを作成しました:\n{filepath}"
+                "Information",
+                f"JSON file created:\n{filepath}"
             )
             
         except Exception as e:
             self.logger.error(f"JSONエクスポート中にエラーが発生しました: {str(e)}")
             QMessageBox.critical(
                 self,
-                "エラー",
+                "Error",
                 f"エクスポート中にエラーが発生しました:\n{str(e)}"
             )
     
@@ -592,26 +592,26 @@ class MainWindow(QMainWindow):
         """メニューバーの設定"""
         menubar = self.menuBar()
         
-        file_menu = menubar.addMenu("ファイル")
+        file_menu = menubar.addMenu("File")
         
-        new_db_action = file_menu.addAction("新規作成")
+        new_db_action = file_menu.addAction("New")
         new_db_action.triggered.connect(self.create_new_database)
         
-        open_db_action = file_menu.addAction("開く")
+        open_db_action = file_menu.addAction("Open")
         open_db_action.triggered.connect(self.open_database)
         
-        self.recent_menu = QMenu("最近使用したファイル", self)
+        self.recent_menu = QMenu("Recent Files", self)
         file_menu.addMenu(self.recent_menu)
         self.update_recent_files_menu()
         
         file_menu.addSeparator()
         
-        close_db_action = file_menu.addAction("閉じる")
+        close_db_action = file_menu.addAction("Close")
         close_db_action.triggered.connect(self.close_database)
         
         file_menu.addSeparator()
         
-        exit_action = file_menu.addAction("終了")
+        exit_action = file_menu.addAction("Exit")
         exit_action.triggered.connect(self.close)
         
         settings_menu = menubar.addMenu("Settings")
@@ -705,7 +705,7 @@ Visit our website for more help.
             self.logger.error(f"フォルダを開く際にエラーが発生しました: {str(e)}")
             QMessageBox.critical(
                 self,
-                "エラー",
+                "Error",
                 f"フォルダを開けませんでした:\n{str(e)}"
             )
 
@@ -719,7 +719,7 @@ Visit our website for more help.
             else:
                 QMessageBox.warning(
                     self,
-                    "警告",
+                    "Warning",
                     f"アクティブなデータベースファイル '{db_path}' が見つかりません。\nモーションリスト管理ウィンドウで手動で選択してください。"
                 )
                 self.motion_list_window = MotionListWindow()
@@ -727,7 +727,7 @@ Visit our website for more help.
         except Exception as e:
             QMessageBox.critical(
                 self,
-                "エラー",
+                "Error",
                 f"モーションリスト管理ウィンドウの起動に失敗しました: {str(e)}"
             )
 
@@ -773,7 +773,7 @@ Visit our website for more help.
         
         # 最近使用したファイルがない場合
         if not recent_files:
-            no_recent = QAction("最近使用したファイルはありません", self)
+            no_recent = QAction("No recent files", self)
             no_recent.setEnabled(False)
             self.recent_menu.addAction(no_recent)
             return
@@ -789,9 +789,9 @@ Visit our website for more help.
         # ファイル選択ダイアログ
         file_path, _ = QFileDialog.getSaveFileName(
             self, 
-            "新規データベースの作成", 
+            "Create New Database", 
             str(Path.home()), 
-            "SQLiteデータベース (*.db)"
+            "SQLite Database (*.db)"
         )
         
         if not file_path:  # キャンセルされた場合
@@ -810,19 +810,19 @@ Visit our website for more help.
                 self.signal_emitter.database_changed.emit()
                 self.logger.info(f"新しいデータベースを作成しました: {file_path}")
             else:
-                QMessageBox.critical(self, "エラー", "データベースの作成に失敗しました。")
+                QMessageBox.critical(self, "Error", "Failed to create database.")
                 
         except Exception as e:
-            QMessageBox.critical(self, "エラー", f"データベースの作成中にエラーが発生しました: {str(e)}")
+            QMessageBox.critical(self, "Error", f"Error creating database: {str(e)}")
             self.logger.error(f"データベース作成中にエラーが発生: {str(e)}", exc_info=True)
     
     def open_database(self):
         """既存のデータベースファイルを開く"""
         file_path, _ = QFileDialog.getOpenFileName(
             self, 
-            "データベースを開く", 
+            "Open Database", 
             str(Path.home()), 
-            "SQLiteデータベース (*.db)"
+            "SQLite Database (*.db)"
         )
         
         if not file_path:  # キャンセルされた場合
@@ -846,10 +846,10 @@ Visit our website for more help.
                 self.signal_emitter.database_changed.emit()
                 self.logger.info(f"データベースを開きました: {file_path}")
             else:
-                QMessageBox.critical(self, "エラー", "データベースを開けませんでした。")
+                QMessageBox.critical(self, "Error", "Failed to open database.")
                 
         except Exception as e:
-            QMessageBox.critical(self, "エラー", f"データベースを開く際にエラーが発生しました: {str(e)}")
+            QMessageBox.critical(self, "Error", f"Error opening database: {str(e)}")
             self.logger.error(f"データベースを開く際にエラーが発生: {str(e)}", exc_info=True)
     
     def close_database(self):
@@ -868,10 +868,10 @@ Visit our website for more help.
                 self.signal_emitter.database_changed.emit()
                 self.logger.info("デフォルトデータベースに戻りました")
             else:
-                QMessageBox.critical(self, "エラー", "デフォルトデータベースに戻れませんでした。")
+                QMessageBox.critical(self, "Error", "Failed to return to default database.")
                 
         except Exception as e:
-            QMessageBox.critical(self, "エラー", f"データベースを閉じる際にエラーが発生しました: {str(e)}")
+            QMessageBox.critical(self, "Error", f"Error closing database: {str(e)}")
             self.logger.error(f"データベースを閉じる際にエラーが発生: {str(e)}", exc_info=True)
     
     def confirm_discard_changes(self):
@@ -923,11 +923,11 @@ Visit our website for more help.
         """選択されたビデオを削除"""
         selected_rows = self.get_selected_rows()
         if not selected_rows:
-            QMessageBox.information(self, "情報", "削除するビデオを選択してください。")
+            QMessageBox.information(self, "Information", "Please select videos to delete.")
             return
         
-        msg = "選択されたビデオを削除しますか？"
-        reply = QMessageBox.question(self, '確認', msg, QMessageBox.Yes, QMessageBox.No)
+        msg = "Delete selected videos?"
+        reply = QMessageBox.question(self, 'Confirm', msg, QMessageBox.Yes, QMessageBox.No)
         
         if reply == QMessageBox.Yes:
             try:
@@ -955,7 +955,7 @@ Visit our website for more help.
         """選択されたビデオの処理を開始"""
         selected_rows = self.get_selected_rows()
         if not selected_rows:
-            QMessageBox.information(self, "情報", "処理するビデオを選択してください。")
+            QMessageBox.information(self, "Information", "処理するビデオを選択してください。")
             return
         
         prompt_name = self.prompt_combo.currentText()
