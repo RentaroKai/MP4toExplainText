@@ -1,85 +1,86 @@
 {
   "fields": {
     "Name of AnimationFile": {
-      "description": "Name of the animation (in English, around 16 characters)",
+      "description": "Give a NEW name to the motion",
       "type": "string",
       "required": true
     },
     "character_gender": {
-      "description": "Suitable gender for the movement",
+      "description": "Gender for which this motion is applicable (use 'any' for versatile motions)",
       "type": "string",
       "required": true,
       "options": ["male", "female", "any"]
     },
     "character_age_group": {
-      "description": "Suitable age group for the movement",
+      "description": "Age group for which this motion is applicable (use 'any' for versatile motions)",
       "type": "string",
       "required": true,
       "options": ["adult", "elderly", "child", "any"]
     },
     "character_body_type": {
-      "description": "Suitable body type for the movement",
+      "description": "Describe the style/direction of movement with an adjective",
       "type": "string",
       "required": true,
-      "options": ["average", "muscular", "Feminine glamour", "any"]
+      "options": ["Sexy feminine", "Massive", "Serious", "Cute feminine", "Reverent", "Languid", "Solemn", "Natural"]
     },
     "Overall Movement Description": {
-      "description": "Overall description of the movement (50-120 characters)",
+      "description": "Concisely describe the movement in English (up to 5 words)",
       "type": "string",
       "required": true
     },
     "Initial Pose": {
-      "description": "Starting pose (example: standing, on all fours, sitting on a chair, walking pose, etc.)",
+      "description": "Starting pose (e.g., lying face down, lying on back, sitting, squatting, standing, etc.)",
       "type": "string",
       "required": true
     },
     "Final Pose": {
-      "description": "Ending pose (example: standing, on all fours, sitting on a chair, walking pose, etc.)",
+      "description": "Ending pose (e.g., lying face down, lying on back, sitting, squatting, standing, etc.)",
       "type": "string",
       "required": true
     },
     "Appropriate Scene": {
-      "description": "Appropriate scene (e.g., daily life, combat, etc.)",
+      "description": "Motion genre (everyday scene, conversation scene, tense scene, battle scene, etc.)",
       "type": "string",
       "required": true
     },
     "Loopable": {
-      "description": "The first and last poses match exactly in position and angle, making the loop unnoticeable even when played endlessly. e.g., Yes/No",
+      "description": "Whether it can be played on repeat (loop playback) (Yes/No)",
       "type": "string",
       "required": true,
       "options": ["Yes", "No"]
     },
     "Tempo Speed": {
-      "description": "Movement tempo",
+      "description": "Speed of movement",
       "type": "string",
       "required": true,
-      "options": ["Fast-paced", "Moderate", "Slow"]
+      "options": ["Quick", "Brisk", "Normal", "Relaxed"]
     },
     "Intensity Force": {
-      "description": "Movement intensity",
+      "description": "Emotional intensity",
       "type": "string",
       "required": true,
-      "options": ["High Impact", "Subtle"]
+      "options": ["Intense emotional expression", "Minimal emotional expression", "No emotion"]
     },
     "Posture Detail": {
-      "description": "Detailed description of posture (16-100 characters)",
+      "description": "Precise description of posture",
       "type": "string",
       "required": true
-   },
+    },
     "param_01": {
-      "description": "HandyItem",
+      "description": "Item held in hand (e.g., ball, bat, none)",
       "type": "string",
       "required": false
     },
     "param_02": {
-      "description": "CominucationParam(e.g., Neutral, Agree, Deny,  etc.)",
+      "description": "Intent conveyed by the movement (e.g., agreement, denial, sadness, command, greeting, joy, none (use 'none' if nothing applies))",
       "type": "string",
       "required": false
     },
     "param_03": {
-      "description": "Emotion(e.g., Neutral, Happy, Sad, Angry, etc.)",
+      "description": "Choose one specific posture category:",
       "type": "string",
-      "required": false
+      "required": true,
+      "options": ["standing", "sitting on furniture", "sitting on ground", "squatting", "lying down"]
     }
   }
-} 
+}

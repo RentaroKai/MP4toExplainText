@@ -1,0 +1,85 @@
+{
+  "fields": {
+    "Name of AnimationFile": {
+      "description": "動きに新たな名前を日本語でつけて",
+      "type": "string",
+      "required": true
+    },
+    "character_gender": {
+      "description": "モーションを適用可能な性別(汎用的なものは問わないにする)",
+      "type": "string",
+      "required": true,
+      "options": ["男", "女", "問わない"]
+    },
+    "character_age_group": {
+      "description": "モーションを適用可能な年齢（汎用的なものは問わないにする）",
+      "type": "string",
+      "required": true,
+      "options": ["子ども", "大人", "老人", "問わない"]
+    },
+    "character_body_type": {
+      "description": "動きの方向性を形容詞で表現する",
+      "type": "string",
+      "required": true,
+      "options": ["セクシーな女性らしく", "マッシブに","まじめに", "可愛い女性らしく","畏まって","けだるげに","シリアスに","自然に"]
+    },
+    "Overall Movement Description": {
+      "description": "動きを英語で簡潔に表現する(5単語以内)",
+      "type": "string",
+      "required": true
+    },
+    "Initial Pose": {
+      "description": "開始ポーズ（例：うつ伏せ・仰向け・座り・しゃがみ・直立・など）",
+      "type": "string",
+      "required": true
+    },
+    "Final Pose": {
+      "description": "終了ポーズ（例：うつ伏せ・仰向け・座り・しゃがみ・直立・など）",
+      "type": "string",
+      "required": true
+    },
+    "Appropriate Scene": {
+      "description": "モーションのジャンル（一般的な日常シーン・会話シーン・緊迫したシーン・戦闘シーン・など）",
+      "type": "string",
+      "required": true
+    },
+    "Loopable": {
+      "description": "繰り返し再生(ループ再生)可能かどうか（Yes/No）",
+      "type": "string",
+      "required": true,
+      "options": ["Yes", "No"]
+    },
+    "Tempo Speed": {
+      "description": "動きのスピード",
+      "type": "string",
+      "required": true,
+      "options": ["素早く","きびきび", "ふつう", "まったり"]
+    },
+    "Intensity Force": {
+      "description": "感情の強さ",
+      "type": "string",
+      "required": true,
+      "options": ["激しい感情表現", "感情の表現が少ない", "無感情"]
+    },
+    "Posture Detail": {
+      "description": "姿勢の厳密な説明",
+      "type": "string",
+      "required": true
+    },
+    "param_01": {
+      "description": "手に持っているもの(例: ボール, バット, なし)",
+      "type": "string",
+      "required": false
+    },
+    "param_02": {
+      "description": "動きによって伝えたいこと(例: 同意,否定,悲しい,命令,挨拶,喜び,なし（特にあてはまらなければ「なし」にする）)",
+      "type": "string",
+      "required": false
+    },
+    "param_03": {
+      "description": "姿勢の分類を次から一つ選ぶ:立ち・椅子的なものへの座り・地面座り・しゃがみ・ねころび",
+      "type": "string",
+      "required": false
+    }
+  }
+}
