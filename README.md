@@ -1,101 +1,93 @@
-# MP4toExplainText
+# MotionTagger
 
-AIを利用して動画分析とタグ付けを行うアプリ
+![alt text](img/cocer.png)
 
-## 概要
 
-動画ファイル(mp4)を分析し、動作を自動的に検出して  
-表形式に出力するアプリケーションです。
- - ふさわしいファイル名
- - 男性/女性/年齢
- - 姿勢の詳細
- - 動きの説明
- - LOOP可能かどうか
+A tool for sending videos to AI for tagging
 
-スクリプトの中で、自然言語で  
-XXの情報を書いて！と指定しているだけなので、  
-改造すれば自分のほしい情報を取得できます。
+## Overview
 
-ツールの画面に出るタグ情報は少ないですが、  
-csvを出すとタグがびっしり書かれています。
+This is an application that analyzes video files (mp4), automatically detects actions,
+and outputs them in tabular format.
+Examples of output content (customizable):
+- Appropriate file name
+- Male/female/age
+- Detailed posture
+- Description of movements
+- Whether it can be LOOPed or not
 
-### プロンプトのカスタマイズ
+Since the script simply specifies in natural language
+"Write XX information!", you can get the information you want
+by modifying it according to your needs.
 
-AIへの指示（プロンプト）はJSONファイルとして外部化されており、
-`config/prompts/` ディレクトリで管理されています。
-ユーザーは必要に応じて以下のことができます：
+The tag information that appears on the tool screen is minimal,
+but when you export to CSV, it's filled with detailed tags.
 
-- 既存のプロンプトテンプレートから選択
-- 新しいプロンプトの作成と保存
-- プロンプトの編集や調整
+### Customizing Prompts
 
-プロンプトの例は `config/prompts/sample01.json` を参照してください。
+Instructions to AI (prompts) are externalized as JSON files and
+managed in the `config/prompts/` directory.
+Users can:
 
-## 主な機能
+- Select from existing prompt templates
+- Create and save new prompts
+- Edit or adjust prompts
 
-- 動画ファイルの読み込みと分析
-- 自動タグ付け機能
-- カスタムタグの作成と管理
-- 分析結果のCSVエクスポート
-- ログ管理システム
-- JSONベースのプロンプト管理と選択機能
+Please refer to `config/prompts/sample01.json` for prompt examples.
 
-## システム要件
+## Main Features
 
-- Python 3.8以上
+- Loading and analyzing video files
+- Automatic tagging function
+- Creation and management of custom tags
+- CSV export of analysis results
+- Log management system
+- JSON-based prompt management and selection
+
+## System Requirements
+
+- Python 3.8 or higher
 - Windows 10/11
 
-## インストール
+## Installation
 
-1. リポジトリのクローン:
+1. Clone the repository:
 
-2. 依存関係のインストール:
+2. Install dependencies:
 ```bash
 pip install -r requirements.txt
 ```
 
-3. 設定ファイルの準備:
-- `config/config.json`にアプリケーションの設定を記述
-- Gemini APIキーの設定
+3. Prepare configuration files:
+- Describe application settings in `config/config.json`
+- Configure Gemini API key
 
-## Gemini APIキーの取得方法
+## How to Get Gemini API Key
 
-Gemini API キーを取得するには以下の手順に従ってください:
+Follow these steps to obtain a Gemini API key:
 
-1. [Google Gemini](https://www.google.com/ai/gemini) の公式サイトにアクセス
-2. Google アカウントでログインまたは新規登録を行う
-3. プロジェクトを作成し、Gemini API を有効化する
-4. 発行された API キーを `config/config.json` の該当箇所に設定する
+1. Access the official [Google Gemini](https://www.google.com/ai/gemini) website
+2. Log in with your Google account or register a new one
+3. Create a project and enable the Gemini API
+4. Set the issued API key in the appropriate section of `config/config.json`
 
-※ 詳細な手順は Google のドキュメントをご参照ください。
+※ Please refer to Google's documentation for detailed instructions.
 
-## 使用方法
+## Usage
 
-1. アプリケーションの起動方法:
+1. How to start the application:
 
-batで起動するなら run.bat
-pythonで起動するなら src/main.py
+Launch with bat: run.bat
+Launch with Python: src/main.py
 
-2. UIから動画ファイルを選択し、分析を開始
+2. Select a video file from the UI and start analysis
 
+## Information for Developers
 
-## 開発者向け情報
+- Check logs: `logs/motion_tag_[date].log`
+- Analysis results: `exports/csv/`
+- To create an exe: pyinstaller MP4toExplainText.spec
 
-- ログの確認: `logs/motion_tag_[日付].log`
-- 分析結果: `exports/csv/`
-- exeを作る場合　pyinstaller MP4toExplainText.spec
+## License
 
-## ライセンス
-
-このプロジェクトはMITライセンスの下で公開されています。
-
-## 貢献
-
-バグ報告や機能要望は、GitHubのIssueでお願いします。
-プルリクエストも歓迎します。 
-
-## メモ
-
-シンプルな動画解析のスクリプトサンプルは
-samplescripts
-フォルダに入れてある
+This project is released under the MIT license.
