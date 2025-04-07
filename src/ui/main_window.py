@@ -116,6 +116,10 @@ class MainWindow(QMainWindow):
         refresh_button.clicked.connect(self.update_prompt_list)
         prompt_layout.addWidget(refresh_button)
         
+        edit_button = QPushButton("Edit")
+        edit_button.clicked.connect(self.open_prompt_json_in_editor)
+        prompt_layout.addWidget(edit_button)
+        
         prompt_layout.addStretch()
         
         layout.addLayout(prompt_layout)
@@ -147,6 +151,25 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.logger.error(f"プロンプト設定の読み込みに失敗: {str(e)}")
             self.show_error(f"プロンプト設定の読み込みに失敗しました:\n{str(e)}")
+    
+    def open_prompt_json_in_editor(self):
+        """現在選択されているプロンプトのJSONファイルをデフォルトエディタで開く"""
+        config_name = self.prompt_combo.currentText()
+        if not config_name:
+            self.logger.warning("編集するプロンプトが選択されていません。")
+            return
+
+        try:
+            config_path = self.prompt_manager.get_config_path(config_name)
+            if config_path and config_path.exists():
+                self.logger.info(f"プロンプト設定ファイルを開きます: {config_path}")
+                os.startfile(config_path)
+            else:
+                self.logger.error(f"プロンプト設定ファイルが見つかりません: {config_name}")
+                self.show_error(f"設定ファイルが見つかりません:\n{config_path}")
+        except Exception as e:
+            self.logger.error(f"プロンプト設定ファイルのオープン中にエラーが発生しました: {str(e)}")
+            self.show_error(f"ファイルのオープンに失敗しました:\n{str(e)}")
     
     def setup_drag_drop_area(self, parent_layout):
         """ドラッグ＆ドロップエリアの設定"""

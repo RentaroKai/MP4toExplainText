@@ -23,6 +23,18 @@ class PromptManager:
             self.logger.error(f"設定ファイルの一覧取得に失敗: {str(e)}")
             return []
     
+    def get_config_path(self, config_name: str) -> Optional[Path]:
+        """指定された設定名のファイルパスを取得する"""
+        if not config_name:
+            self.logger.warning("設定名が空です。")
+            return None
+        try:
+            path = self.config_dir / f"{config_name}.json"
+            return path
+        except Exception as e:
+            self.logger.error(f"設定パスの取得中にエラー: {str(e)}")
+            return None
+    
     def load_config(self, config_name: str = "default") -> Dict:
         """指定された設定ファイルを読み込む"""
         try:
