@@ -440,7 +440,7 @@ class Database:
             self.logger.error(f"動画情報の取得中にエラーが発生しました: {str(e)}")
             raise
     
-    def get_all_videos(self, page: int = 1, per_page: int = 50) -> List[Dict]:
+    def get_all_videos(self, page: int = 1, per_page: int = 500) -> List[Dict]:
         """全ての動画情報をページネーション付きで取得"""
         try:
             with self._get_connection() as conn:
