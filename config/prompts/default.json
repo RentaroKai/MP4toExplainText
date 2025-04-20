@@ -15,7 +15,7 @@
       "description": "Age group for which this motion is applicable (use 'any' for versatile motions)",
       "type": "string",
       "required": true,
-      "options": ["adult", "elderly", "child", "any"]
+      "options": ["adult", "old", "child", "any"]
     },
     "character_body_type": {
       "description": "Describe the style/direction of movement with an adjective",
@@ -29,19 +29,22 @@
       "required": true
     },
     "Initial Pose": {
-      "description": "Starting pose (e.g., lying face down, lying on back, sitting, squatting, standing, etc.)",
+      "description": "Choose one specific (starting) posture category:",
       "type": "string",
-      "required": true
+      "required": true,
+      "options": ["standing", "walking", "running", "sitting on furniture", "sitting on ground", "squatting", "lying down"]
     },
     "Final Pose": {
-      "description": "Ending pose (e.g., lying face down, lying on back, sitting, squatting, standing, etc.)",
+      "description": "Choose one specific (ending) posture category:",
       "type": "string",
-      "required": true
+      "required": true,
+      "options": ["standing", "walking", "running", "sitting on furniture", "sitting on ground", "squatting", "lying down"]
     },
     "Appropriate Scene": {
-      "description": "Motion genre (everyday scene, conversation scene, tense scene, battle scene, etc.)",
+      "description": "Motion genre ",
       "type": "string",
-      "required": true
+      "required": true,
+      "options": ["Combat", "Adventure", "Sport", "Dance", "Fantasy", "Gesture", "FacialAnimation","Other"]
     },
     "Loopable": {
       "description": "Whether it can be played on repeat (loop playback) (Yes/No)",
@@ -72,15 +75,32 @@
       "required": false
     },
     "param_02": {
-      "description": "Intent conveyed by the movement (e.g., agreement, denial, sadness, command, greeting, joy, none (use 'none' if nothing applies))",
+      "description": "Intent conveyed by the movement (use 'Neutral' if nothing applies)",
       "type": "string",
-      "required": false
+      "required": false,
+      "options": [
+        "Agreement",
+        "Denial",
+        "Sadness",
+        "Joy",
+        "Anger",
+        "Fear",
+        "Command",
+        "Greeting",
+        "Pride",
+        "Excitement",
+        "Determination",
+        "Warning",
+        "Invitation",
+        "Rejection",
+        "Neutral"
+      ]
     },
     "param_03": {
-      "description": "Choose one specific posture category:",
+      "description": "Choose one specific gesture category:",
       "type": "string",
       "required": true,
-      "options": ["standing", "sitting on furniture", "sitting on ground", "squatting", "lying down"]
+      "options": ["Conversation","Shout","Laugh","Celebrate","Flirt","Challenge","Cry","Dismiss","GetUp","Groove","Greeting","Mope","Flex","Reaction","Taunt","Thankful","Threaten","Cheer","Wave","Clap","Nod","ShakeHead","Point","Bow","Shrug","Jump"]
     }
   }
 }
