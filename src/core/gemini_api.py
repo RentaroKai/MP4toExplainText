@@ -126,8 +126,11 @@ class GeminiAPI:
             "response_mime_type": "application/json",
         }
 
+        # FIRST_EDIT: Use model_name from config
+        model_name = self.config.get_model_name()
+        self.logger.info(f"Using Gemini model: {model_name}")
         self.model = genai.GenerativeModel(
-            model_name="gemini-2.5-pro-exp-03-25",
+            model_name=model_name,
             generation_config=generation_config,
             system_instruction="""
             Analyze the actions of people in the video and return the results in JSON format.
@@ -150,8 +153,6 @@ class GeminiAPI:
             - param_03 (Emotion: e.g., Neutral, Happy, Sad, Angry, etc.)
             """
         )
-
-
 
     def upload_video(self, video_path: str) -> Optional[genai.types.File]:
         """動画ファイルをGeminiにアップロード"""

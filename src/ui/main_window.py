@@ -640,6 +640,8 @@ class MainWindow(QMainWindow):
         settings_menu = menubar.addMenu("Settings")
         api_key_action = settings_menu.addAction("Set API Key")
         api_key_action.triggered.connect(self.set_api_key)
+        model_action = settings_menu.addAction("Set Model")
+        model_action.triggered.connect(self.set_model)
         
         window_menu = menubar.addMenu("Window")
         
@@ -688,6 +690,41 @@ class MainWindow(QMainWindow):
             if new_key and new_key != masked_key:
                 self.config.set_api_key(new_key)
                 QMessageBox.information(self, "Success", "API key saved.")
+
+    def set_model(self):
+        """Geminiモデル名を設定するダイアログを表示"""
+        current_model = self.config.get_model_name()
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Set Gemini Model")
+        layout = QVBoxLayout()
+        
+        info_label = QLabel("Enter the Gemini model name:")
+        layout.addWidget(info_label)
+        
+        input_field = QLineEdit(dialog)
+        input_field.setPlaceholderText("e.g., gemini-2.5-pro-exp-03-25")
+        input_field.setText(current_model)
+        layout.addWidget(input_field)
+        
+        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        button_box.accepted.connect(dialog.accept)
+        button_box.rejected.connect(dialog.reject)
+        layout.addWidget(button_box)
+        
+        dialog.setLayout(layout)
+        
+        if dialog.exec() == QDialog.Accepted:
+            new_model = input_field.text().strip()
+            if new_model and new_model != current_model:
+                try:
+                    self.config.set_model_name(new_model)
+                    # 新しいモデル名をGeminiAPIに反映
+                    self.processor.gemini._setup_model()
+                    QMessageBox.information(self, "Success", f"Model set to {new_model}")
+                    self.logger.info(f"Gemini model updated to: {new_model}")
+                except Exception as e:
+                    self.logger.error(f"モデル設定エラー: {str(e)}")
+                    QMessageBox.critical(self, "Error", f"モデル設定中にエラーが発生しました:\n{str(e)}")
 
     def show_about(self):
         """バージョン情報を表示"""

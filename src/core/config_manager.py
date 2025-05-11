@@ -205,4 +205,24 @@ class ConfigManager:
         # APIキーを暗号化して保存（実際のプロダクションでは適切な暗号化が必要）
         self._config["api_key"] = api_key
         self._save_json(self.config_file, self._config)
-        self.logger.info("APIキーを設定ファイルに保存しました") 
+        self.logger.info("APIキーを設定ファイルに保存しました")
+    
+    def get_model_name(self) -> str:
+        """Get the configured Gemini model name by reloading config file, fallback to default."""
+        # Reload configuration to reflect any updates
+        config_data = self._load_json(self.config_file)
+        api_conf = config_data.get("api", {})
+        model_name = api_conf.get("model_name")
+        if model_name:
+            return model_name
+        default_model = "gemini-2.5-pro-exp-03-25"
+        self.logger.info(f"No model_name in config, using default: {default_model}")
+        return default_model
+
+    def set_model_name(self, model_name: str):
+        """Set the Gemini model name in config."""
+        if "api" not in self._config or not isinstance(self._config.get("api"), dict):
+            self._config["api"] = {}
+        self._config["api"]["model_name"] = model_name
+        self._save_json(self.config_file, self._config)
+        self.logger.info(f"Gemini model name set to: {model_name}") 
