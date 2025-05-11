@@ -606,4 +606,21 @@ class Database:
                     
         except Exception as e:
             self.logger.error(f"プロンプト設定の更新中にエラーが発生しました: {str(e)}")
-            return False 
+            return False
+
+    def delete_video(self, video_id: int):
+        """指定された動画と関連データをデータベースから削除"""
+        try:
+            with self._get_connection() as conn:
+                cursor = conn.cursor()
+                # 解析結果を削除
+                cursor.execute("DELETE FROM analysis_results WHERE video_id = ?", (video_id,))
+                # タグを削除
+                cursor.execute("DELETE FROM tags WHERE video_id = ?", (video_id,))
+                # 動画を削除
+                cursor.execute("DELETE FROM videos WHERE id = ?", (video_id,))
+                conn.commit()
+                self.logger.info(f"動画ID {video_id} を削除しました")
+        except Exception as e:
+            self.logger.error(f"動画削除中にエラーが発生しました: {str(e)}")
+            raise 

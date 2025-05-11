@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (
     QPushButton, QCheckBox, QTableWidget, QTableWidgetItem,
     QLabel, QProgressBar, QFileDialog, QMessageBox,
     QMenuBar, QMenu, QInputDialog, QDialog, QLineEdit, QDialogButtonBox,
-    QComboBox
+    QComboBox, QAbstractItemView
 )
 from PySide6.QtCore import Qt, QMimeData, Signal, QObject, QTimer
 from PySide6.QtGui import QDragEnterEvent, QDropEvent, QAction
@@ -260,6 +260,12 @@ class MainWindow(QMainWindow):
     def setup_table_view(self, parent_layout):
         """テーブルビューの設定"""
         self.table = QTableWidget()
+        # 行選択と複数選択を有効化
+        self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.table.setSelectionMode(QAbstractItemView.MultiSelection)
+        # コンテキストメニューを有効化
+        self.table.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.table.customContextMenuRequested.connect(self.open_table_context_menu)
         self.table.setColumnCount(6)  # カラム数を6に変更
         self.table.setHorizontalHeaderLabels([
             "Video Name", "Open", "Status", "Progress", "Tags", "Actions"  # "Open"カラムを追加
@@ -992,7 +998,11 @@ Visit our website for more help.
         if reply == QMessageBox.Yes:
             try:
                 for row in sorted(selected_rows, reverse=True):
-                    video_id = int(self.table.item(row, 0).text())
+                    # UserRoleに設定したvideo_idを取得
+                    video_id = self.table.item(row, 0).data(Qt.UserRole)
+                    self.logger.debug(f"Deleting video_id={video_id}, row={row}")
+                    if video_id is None:
+                        continue
                     self.db.delete_video(video_id)
                 
                 self.logger.info(f"{len(selected_rows)}件のビデオを削除しました")
@@ -1030,4 +1040,17 @@ Visit our website for more help.
             
             self.db.update_video_prompt(video_id, prompt_name)
             
-            self.process_video(video_id, file_path) 
+            self.process_video(video_id, file_path)
+
+    def open_table_context_menu(self, position):
+        """テーブルのコンテキストメニューを表示"""
+        menu = QMenu()
+        delete_action = QAction("Delete Selected", self)
+        delete_action.triggered.connect(self.delete_selected_videos)
+        menu.addAction(delete_action)
+        menu.exec(self.table.viewport().mapToGlobal(position))
+
+    def get_selected_rows(self) -> List[int]:
+        """選択された行番号のリストを取得"""
+        # 選択された行のインデックスを取得
+        return [idx.row() for idx in self.table.selectionModel().selectedRows()] 
