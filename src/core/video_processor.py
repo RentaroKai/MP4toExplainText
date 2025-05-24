@@ -44,17 +44,20 @@ class VideoProcessor:
             
             # 既に処理中の場合は待機
             if video_id in self._processing:
-                print(f"この動画は既に処理中です - video_id: {video_id}")
+                self.logger.debug(f"この動画は既に処理中です - video_id: {video_id}")
                 return False
                 
-            while len(self._processing) > 0:
-                current_processing = self._processing.copy()  # コピーを作成
-                print(f"他の動画の処理完了を待機中... - 待機中の動画ID: {video_id}, 処理中の動画: {current_processing}")
-                # 処理待ち状態に設定
+            # 他の動画の処理完了を待機
+            if len(self._processing) > 0:
+                self.logger.info(f"他の動画の処理完了を待機中 - 待機中の動画ID: {video_id}")
+                # 待機開始時に一度だけステータス更新
                 self.db.update_video_status(video_id, VideoStatus.PENDING.value)
                 if status_callback:
                     status_callback(video_id, VideoStatus.PENDING.value)
-                await asyncio.sleep(1)  # 1秒待機
+                
+                # 待機ループ（ステータス更新なし）
+                while len(self._processing) > 0:
+                    await asyncio.sleep(5)  # 待機間隔を5秒に延長
             
             print(f"処理を開始します - video_id: {video_id}")
             self._processing.add(video_id)
