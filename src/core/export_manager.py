@@ -34,9 +34,22 @@ class ExportManager:
         return f"{prefix}_{timestamp}.{extension}"
 
     def _get_all_video_ids(self) -> List[int]:
-        """全ての動画IDを取得"""
-        videos = self.database.get_all_videos()
-        return [video["id"] for video in videos]
+        """全ての動画IDをページネーションを使って取得"""
+        video_ids: List[int] = []
+        page = 1
+        per_page = 500
+        while True:
+            videos = self.database.get_all_videos(page=page, per_page=per_page)
+            if not videos:
+                break
+            # 現在のページのIDを追加
+            ids = [video.get("id") for video in videos if video.get("id") is not None]
+            video_ids.extend(ids)
+            # 最後のページなら終了
+            if len(videos) < per_page:
+                break
+            page += 1
+        return video_ids
     
     def _parse_result_json(self, result_json: str) -> dict:
         """
