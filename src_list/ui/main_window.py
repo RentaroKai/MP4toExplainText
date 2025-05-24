@@ -10,6 +10,9 @@ from ..models.table_item import TableItem
 import os
 import logging
 import datetime
+import csv
+from pathlib import Path
+from typing import List
 
 class MainWindow(QMainWindow):
     def __init__(self, db_path=None):
@@ -89,6 +92,11 @@ class MainWindow(QMainWindow):
         refresh_btn = QPushButton("更新")
         refresh_btn.clicked.connect(self._refresh_data)
         control_layout.addWidget(refresh_btn)
+        
+        # CSVエクスポートボタンを追加
+        export_csv_btn = QPushButton("CSVエクスポート")
+        export_csv_btn.clicked.connect(self._export_to_csv)
+        control_layout.addWidget(export_csv_btn)
         
         layout.addLayout(control_layout)
 
@@ -220,3 +228,60 @@ class MainWindow(QMainWindow):
                     "警告",
                     "キャラクター情報の更新に失敗しました"
                 ) 
+
+    def _export_to_csv(self):
+        """選択された項目または全件をCSVにエクスポート"""
+        if not self.data_manager:
+            QMessageBox.warning(self, "警告", "データベースに接続してください")
+            return
+        try:
+            # データベースから全件取得
+            videos = self.data_manager.load_all_videos()
+            # TableItemリストを作成
+            items_all = [TableItem.from_dict(video) for video in videos]
+            # 選択されたIDリストを取得
+            selected_ids = set(self._get_selected_video_ids())
+            if selected_ids:
+                export_items = [item for item in items_all if item and item.id in selected_ids]
+            else:
+                export_items = items_all
+            if not export_items:
+                QMessageBox.information(self, "情報", "エクスポートするデータがありません")
+                return
+            # エクスポートディレクトリ設定
+            export_dir = Path("exports") / "csv"
+            export_dir.mkdir(parents=True, exist_ok=True)
+            # ファイル名生成
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"motion_list_export_{timestamp}.csv"
+            filepath = export_dir / filename
+            # CSV書き出し
+            with open(filepath, "w", newline="", encoding="utf-8") as f:
+                writer = csv.writer(f)
+                # ヘッダー
+                writer.writerow(list(export_items[0].to_dict().keys()))
+                for item in export_items:
+                    writer.writerow(list(item.to_dict().values()))
+            QMessageBox.information(self, "情報", f"CSVファイルが作成されました:\n{filepath}")
+        except Exception as e:
+            self.logger.error(f"CSVエクスポート中にエラーが発生: {e}", exc_info=True)
+            QMessageBox.critical(self, "エラー", f"CSVエクスポート中にエラーが発生しました:\n{str(e)}")
+
+    def _get_selected_video_ids(self) -> List[int]:
+        """選択された行からvideo_idのリストを取得"""
+        video_ids: List[int] = []
+        processed_rows = set()
+        for item in self.table.selectedItems():
+            row = item.row()
+            if row in processed_rows:
+                continue
+            try:
+                # IDは1列目のテキストとして保存されている
+                id_item = self.table.item(row, 0)
+                if id_item:
+                    vid = int(id_item.text())
+                    video_ids.append(vid)
+                processed_rows.add(row)
+            except Exception as ex:
+                self.logger.error(f"行 {row} のID取得中にエラー: {ex}", exc_info=True)
+        return video_ids 
