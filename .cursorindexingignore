@@ -1,0 +1,55 @@
+tests/
+__pycache__/
+temp/
+logs/
+*.db
+*.log
+*.log.*
+*.log.*.*
+*.log.*.*.*
+*.log.*.*.*.*
+*.log.*.*.*.*.*
+exports/
+tools/
+
+# 仮想環境のディレクトリ
+venv/
+ENV/
+
+# Pythonのバイトコード
+*.pyc
+
+# macOSのシステムファイル
+.DS_Store
+
+# IDE関連の設定ファイル・ディレクトリ
+.vscode/
+.idea/
+
+# ビルド成果物のディレクトリ
+dist/
+build/
+
+# パッケージのディレクトリ
+packages/
+
+# パッケージのディレクトリ
+
+EXE.zip
+GIT.jpg
+.cursor/rules/commitmessage.mdc
+.cursor/rules/moduledoc.mdc
+タブベースの仕様追加.md
+docs/prompt_externalization_spec.md
+src/core/old_gemini_api.py
+run_migrate.bat
+data/config/config.json
+data/config/paths.json
+debug_prompt_name.py
+debug_prompt_name_full.py
+debug_prompt_name_log.py
+カスタムパラメータ追加.md
+DatabaseUpdateDocumentation
+
+
+修正仕様.md

@@ -345,6 +345,21 @@ class MainWindow(QMainWindow):
         for file in files:
             self.logger.info(f"ファイルが追加されました: {file}")
             
+            # 重複チェックを追加
+            try:
+                conn = self.db._get_connection()
+                cursor = conn.cursor()
+                cursor.execute("SELECT id FROM videos WHERE file_path = ?", (file,))
+                existing = cursor.fetchone()
+                conn.close()
+                if existing:
+                    video_id = existing[0]
+                    self.logger.info(f"重複ファイル検出: {file} (video_id={video_id})")
+                    QMessageBox.information(self, "情報", f"ファイル '{Path(file).name}' は既に追加されています。重複をスキップします。")
+                    continue
+            except Exception as e:
+                self.logger.error(f"重複チェック中にエラーが発生しました: {str(e)}", exc_info=True)
+
             # データベースに追加
             try:
                 video_id = self.db.add_video(file)
@@ -963,8 +978,22 @@ Visit our website for more help.
                     self.logger.warning(f"ファイルが存在しません: {file_path}")
                     continue
                     
-                file_name = os.path.basename(file_path)
+                # 重複チェックを追加
+                try:
+                    conn = self.db._get_connection()
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT id FROM videos WHERE file_path = ?", (file_path,))
+                    existing = cursor.fetchone()
+                    conn.close()
+                    if existing:
+                        video_id = existing[0]
+                        self.logger.info(f"重複ファイル検出: {file_path} (video_id={video_id})")
+                        QMessageBox.information(self, "情報", f"ファイル '{os.path.basename(file_path)}' は既に追加されています。重複をスキップします。")
+                        continue
+                except Exception as e:
+                    self.logger.error(f"重複チェック中にエラーが発生しました: {str(e)}", exc_info=True)
                 
+                file_name = os.path.basename(file_path)
                 video_id = self.db.add_video(file_path, file_name)
                 
                 if video_id:
