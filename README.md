@@ -73,6 +73,12 @@ Follow these steps to obtain a Gemini API key:
 
 ※ Please refer to Google's documentation for detailed instructions.
 
+### Important Note about Gemini Models
+
+**Gemini Pro is now a paid service.** If you're using the free tier, please switch to the **Gemini Flash model** instead. The Flash model provides good performance while remaining available for free users.
+
+To switch models, update your configuration to use `gemini-2.5-flash-preview-05-20` (latest Flash model) 
+
 ## Usage
 
 1. How to start the application:

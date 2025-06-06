@@ -215,7 +215,7 @@ class ConfigManager:
         model_name = api_conf.get("model_name")
         if model_name:
             return model_name
-        default_model = "gemini-2.5-pro-exp-03-25"
+        default_model = "gemini-2.5-pro-preview-05-06"
         self.logger.info(f"No model_name in config, using default: {default_model}")
         return default_model
 

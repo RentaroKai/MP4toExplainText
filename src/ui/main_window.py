@@ -723,7 +723,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(info_label)
         
         input_field = QLineEdit(dialog)
-        input_field.setPlaceholderText("e.g., gemini-2.5-pro-exp-03-25")
+        input_field.setPlaceholderText("e.g., gemini-2.5-pro-preview-05-06")
         input_field.setText(current_model)
         layout.addWidget(input_field)
         
