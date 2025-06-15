@@ -20,12 +20,48 @@ from src.core.prompt_manager import PromptManager
 from src.core.constants import VideoStatus  # VideoStatusをインポート
 from typing import List
 from src_list.ui.main_window import MainWindow as MotionListWindow
+
+class AutoCloseMessageBox(QWidget):
+    """自動で消える非モーダルメッセージボックス"""
+    def __init__(self, title: str, message: str, auto_close_time: int = 2000, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle(title)
+        self.setWindowFlags(Qt.WindowType.ToolTip | Qt.WindowType.WindowStaysOnTopHint)
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        
+        # レイアウトの設定
+        layout = QVBoxLayout()
+        label = QLabel(message)
+        label.setWordWrap(True)
+        layout.addWidget(label)
+        self.setLayout(layout)
+        
+        # サイズを調整
+        self.adjustSize()
+        self.setMinimumWidth(300)
+        
+        # 親ウィンドウがある場合、その中央に配置
+        if parent:
+            parent_center = parent.geometry().center()
+            self.move(parent_center.x() - self.width() // 2, 
+                     parent_center.y() - self.height() // 2)
+        
+        # 自動閉じるタイマーを設定
+        self.close_timer = QTimer()
+        self.close_timer.timeout.connect(self.close)
+        self.close_timer.setSingleShot(True)
+        self.close_timer.start(auto_close_time)
+        
+        # 表示
+        self.show()
+
 class SignalEmitter(QObject):
     """非同期処理からのシグナルを発行するためのクラス"""
     progress_updated = Signal(int, int)  # video_id, progress
     status_updated = Signal(int, str)    # video_id, status
     error_occurred = Signal(str)         # error_message
     database_changed = Signal()          # データベース変更シグナル（新規追加）
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -355,7 +391,8 @@ class MainWindow(QMainWindow):
                 if existing:
                     video_id = existing[0]
                     self.logger.info(f"重複ファイル検出: {file} (video_id={video_id})")
-                    QMessageBox.information(self, "情報", f"ファイル '{Path(file).name}' は既に追加されています。重複をスキップします。")
+                    # 自動で消える通知を表示（非モーダル）
+                    AutoCloseMessageBox("重複ファイル", f"ファイル '{Path(file).name}' は既に追加されています。重複をスキップします。", 1500, self)
                     continue
             except Exception as e:
                 self.logger.error(f"重複チェック中にエラーが発生しました: {str(e)}", exc_info=True)
@@ -988,7 +1025,8 @@ Visit our website for more help.
                     if existing:
                         video_id = existing[0]
                         self.logger.info(f"重複ファイル検出: {file_path} (video_id={video_id})")
-                        QMessageBox.information(self, "情報", f"ファイル '{os.path.basename(file_path)}' は既に追加されています。重複をスキップします。")
+                        # 自動で消える通知を表示（非モーダル）
+                        AutoCloseMessageBox("重複ファイル", f"ファイル '{os.path.basename(file_path)}' は既に追加されています。重複をスキップします。", 1500, self)
                         continue
                 except Exception as e:
                     self.logger.error(f"重複チェック中にエラーが発生しました: {str(e)}", exc_info=True)
